@@ -56,7 +56,7 @@ string(STRIP "${RAW_NAME}" NAME)
 string(STRIP "${RAW_VERSION}" VERSION)
 project("${NAME}" VERSION "${VERSION}" LANGUAGES "NONE")
 
-message("project: '${PROJECT_NAME}-${PROJECT_VERSION}'")
+message(STATUS "project: '${PROJECT_NAME}-${PROJECT_VERSION}'")
 
 include("GenerateExportHeader")
 enable_testing()
@@ -411,3 +411,36 @@ add_custom_target("conan-export"
     VERBATIM
     USES_TERMINAL
 )
+
+add_custom_target("sphinx-doc-requirements"
+    COMMAND "${CMAKE_COMMAND}" "-P" "cmake/run-sphinx.cmake" "--"
+            VERBOSE "true"
+            OUTPUT_DIR "build/doc/requirements"
+            TITLE "${PROJECT_NAME} Requirements"
+            FILES "requirements/requirements.rst"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+    USES_TERMINAL
+)
+add_custom_target("sphinx-doc-designs"
+    COMMAND "${CMAKE_COMMAND}" "-P" "cmake/run-sphinx.cmake" "--"
+    VERBOSE "true"
+    OUTPUT_DIR "build/doc/designs"
+    TITLE "${PROJECT_NAME} Designs"
+    FILES "designs/designs.rst"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+    USES_TERMINAL
+)
+add_custom_target("sphinx-doc-clean"
+    COMMAND "${CMAKE_COMMAND}" "-E" "rm" "-rf" "build/doc"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+    USES_TERMINAL
+)
+
+set_target_names(ALL_TARGETS "${CMAKE_CURRENT_SOURCE_DIR}")
+message(STATUS "project: '${PROJECT_NAME}-${PROJECT_VERSION}' all targets:")
+foreach(t IN LISTS ALL_TARGETS)
+    message(STATUS "${t}")
+endforeach()
