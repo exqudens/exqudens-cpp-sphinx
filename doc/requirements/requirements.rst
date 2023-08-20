@@ -1,10 +1,10 @@
-=================================
-|project| |release| Requirements.
-=================================
+#################################
+|project| |release| requirements.
+#################################
 
-.. item:: REQUIREMENT_1 Implement ltrim function.
+.. item:: REQUIREMENT_1 Requirement 1
 
-   Remove all spaces from begin of the string.
+   Implement `ltrim` function to remove all spaces from begin of the string.
 
    .. flat-table:: Description table
       :header-rows: 1
@@ -15,9 +15,9 @@
         - modify
       * - :cspan:`2` return new instance
 
-.. item:: REQUIREMENT_2 Implement rtrim function.
+.. item:: REQUIREMENT_2 Requirement 2
 
-   Remove all spaces from end of the string.
+   Implement `rtrim` function to remove all spaces from end of the string.
 
    #. Type `std::string`
 
@@ -25,6 +25,6 @@
 
       #. return new instance
 
-.. item:: USER_REQUIREMENT_3 Implement ltrim function.
+.. item:: USER_REQUIREMENT_3 Requirement 3
 
-   Remove all spaces from begin and end of the string.
+   Implement `trim` function to remove all spaces from begin and end of the string.

@@ -413,26 +413,33 @@ add_custom_target("conan-export"
 )
 
 add_custom_target("sphinx-doc-requirements"
+    COMMAND "${CMAKE_COMMAND}" "-E" "rm" "-rf" "build/doc/requirements"
     COMMAND "${CMAKE_COMMAND}" "-P" "cmake/run-sphinx.cmake" "--"
             VERBOSE "true"
             OUTPUT_DIR "build/doc/requirements"
-            TITLE "${PROJECT_NAME} Requirements"
+            TITLE "${PROJECT_NAME} requirements"
             FILES "requirements/requirements.rst"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
     USES_TERMINAL
 )
 add_custom_target("sphinx-doc-designs"
+    COMMAND "${CMAKE_COMMAND}" "-E" "rm" "-rf" "build/doc/designs"
+    COMMAND "${CMAKE_COMMAND}" "-E" "rm" "-rf" "build/doxygen/main"
+    COMMAND "${CMAKE_COMMAND}" "-P" "cmake/run-doxygen.cmake" "--"
+            SOURCE_DIR "src/main/cpp"
+            OUTPUT_DIR "build/doxygen/main"
     COMMAND "${CMAKE_COMMAND}" "-P" "cmake/run-sphinx.cmake" "--"
-    VERBOSE "true"
-    OUTPUT_DIR "build/doc/designs"
-    TITLE "${PROJECT_NAME} Designs"
-    FILES "designs/designs.rst"
+            VERBOSE "true"
+            OUTPUT_DIR "build/doc/designs"
+            TITLE "${PROJECT_NAME} designs"
+            FILES "designs/designs.rst"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
     USES_TERMINAL
 )
 add_custom_target("sphinx-doc-clean"
+    COMMAND "${CMAKE_COMMAND}" "-E" "rm" "-rf" "build/doxygen"
     COMMAND "${CMAKE_COMMAND}" "-E" "rm" "-rf" "build/doc"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
