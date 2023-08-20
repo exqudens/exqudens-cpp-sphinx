@@ -434,6 +434,7 @@ add_custom_target("sphinx-doc-designs"
             OUTPUT_DIR "build/doc/designs"
             TITLE "${PROJECT_NAME} designs"
             FILES "designs/designs.rst"
+            EXTRA_FILES "designs/png/structure.png"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
     USES_TERMINAL

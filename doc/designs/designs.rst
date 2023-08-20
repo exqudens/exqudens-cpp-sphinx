@@ -2,6 +2,12 @@
 |project| |release| designs.
 ############################
 
+*********
+Structure
+*********
+
+.. image:: png/structure.png
+
 ***
 API
 ***
