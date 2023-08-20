@@ -15,6 +15,16 @@ function(execute_script args)
     set(currentFunctionName "${CMAKE_CURRENT_FUNCTION}")
     cmake_path(GET "CMAKE_CURRENT_LIST_DIR" PARENT_PATH projectDir)
     cmake_path(GET "CMAKE_CURRENT_LIST_FILE" STEM currentFileNameNoExt)
+    string(JOIN "\n" requirementsFileContent
+        "Sphinx==6.2.1"
+        "linuxdoc==20230506"
+        "breathe==4.35.0"
+        "xmltodict==0.13.0"
+        "mlx.traceability==10.0.0"
+        "docxbuilder==1.2.0"
+        "rst2pdf==0.100"
+        ""
+    )
 
     set(options)
     set(oneValueKeywords
@@ -25,8 +35,11 @@ function(execute_script args)
         "TOCTREE_CAPTION"
         "SOURCE_DIR"
         "BUILD_DIR"
+        "REQUIREMENTS_FILE"
+        "ENV_DIR"
         "TITLE"
         "OUTPUT_DIR"
+        "CLEAN"
     )
     set(multiValueKeywords
         "FILES"
@@ -94,15 +107,31 @@ function(execute_script args)
     endif()
 
     if("${${currentFunctionName}_BUILD_DIR}" STREQUAL "")
-        set(buildDirRelative "build")
+        set(buildDirRelative "build/${currentFileNameNoExt}")
     else()
         set(buildDirRelative "${${currentFunctionName}_BUILD_DIR}")
         cmake_path(APPEND buildDirRelative "DIR")
         cmake_path(GET "buildDirRelative" PARENT_PATH buildDirRelative)
     endif()
 
+    if("${${currentFunctionName}_REQUIREMENTS_FILE}" STREQUAL "")
+        set(requirementsFileRelative "${buildDirRelative}/requirements.txt")
+    else()
+        set(requirementsFileRelative "${${currentFunctionName}_REQUIREMENTS_FILE}")
+        cmake_path(APPEND requirementsFileRelative "DIR")
+        cmake_path(GET "requirementsFileRelative" PARENT_PATH requirementsFileRelative)
+    endif()
+
+    if("${${currentFunctionName}_ENV_DIR}" STREQUAL "")
+        set(envDirRelative "${buildDirRelative}/py-env")
+    else()
+        set(envDirRelative "${${currentFunctionName}_ENV_DIR}")
+        cmake_path(APPEND envDirRelative "DIR")
+        cmake_path(GET "envDirRelative" PARENT_PATH envDirRelative)
+    endif()
+
     if("${${currentFunctionName}_TITLE}" STREQUAL "")
-        set(title "full")
+        set(title "documentation")
     else()
         set(title "${${currentFunctionName}_TITLE}")
         string(REPLACE " " "_" titleFileName "${title}")
@@ -114,6 +143,16 @@ function(execute_script args)
         set(outputDirRelative "${${currentFunctionName}_OUTPUT_DIR}")
         cmake_path(APPEND outputDirRelative "DIR")
         cmake_path(GET "outputDirRelative" PARENT_PATH outputDirRelative)
+    endif()
+
+    if("${${currentFunctionName}_CLEAN}" STREQUAL "")
+        set(clean "TRUE")
+    else()
+        if("${${currentFunctionName}_CLEAN}")
+            set(clean "TRUE")
+        else()
+            set(clean "FALSE")
+        endif()
     endif()
 
     if("${${currentFunctionName}_BUILDERS}" STREQUAL "")
@@ -153,37 +192,45 @@ function(execute_script args)
 
     find_program(SPHINX_BUILD_COMMAND
         NAMES "sphinx-build.exe" "sphinx-build"
-        PATHS "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/py-env/Scripts"
-              "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/py-env/bin"
+        PATHS "${projectDir}/${envDirRelative}/Scripts"
+              "${projectDir}/${envDirRelative}/bin"
         NO_CACHE
         NO_DEFAULT_PATH
     )
 
-    # create py-env
+    # create sphinx env
     if("${SPHINX_BUILD_COMMAND}" STREQUAL "SPHINX_BUILD_COMMAND-NOTFOUND")
         if("${verbose}")
-            message(STATUS "create py-env")
+            message(STATUS "create sphinx env")
+        endif()
+        if(NOT EXISTS "${projectDir}/${requirementsFileRelative}")
+            file(WRITE "${projectDir}/${requirementsFileRelative}" "${requirementsFileContent}")
         endif()
         find_program(PYTHON_COMMAND NAMES "py.exe" "py" "python.exe" "python" NO_CACHE REQUIRED)
         execute_process(
-            COMMAND "${PYTHON_COMMAND}" "-m" "venv" "${buildDirRelative}/${currentFileNameNoExt}/py-env"
+            COMMAND "${PYTHON_COMMAND}" "-m" "venv" "${envDirRelative}"
             WORKING_DIRECTORY "${projectDir}"
             COMMAND_ECHO "STDOUT"
             COMMAND_ERROR_IS_FATAL "ANY"
         )
         find_program(PIP_COMMAND
             NAMES "pip.exe" "pip"
-            PATHS "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/py-env/Scripts"
-                  "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/py-env/bin"
+            PATHS "${projectDir}/${envDirRelative}/Scripts"
+                  "${projectDir}/${envDirRelative}/bin"
             NO_CACHE
             REQUIRED
             NO_DEFAULT_PATH
         )
         set(command "${PIP_COMMAND}" "install")
         if(NOT "${ssl}")
-            list(APPEND command "--trusted-host" "pypi.org" "--trusted-host" "pypi.python.org" "--trusted-host" "files.pythonhosted.org" "-r" "requirements.txt")
+            list(APPEND command
+                "--trusted-host" "pypi.org"
+                "--trusted-host" "pypi.python.org"
+                "--trusted-host" "files.pythonhosted.org"
+                "-r" "${requirementsFileRelative}"
+            )
         endif()
-        list(APPEND command "-r" "cmake/${currentFileNameNoExt}/requirements.txt")
+        list(APPEND command "-r" "${requirementsFileRelative}")
         execute_process(
             COMMAND ${command}
             WORKING_DIRECTORY "${projectDir}"
@@ -192,8 +239,8 @@ function(execute_script args)
         )
         find_program(SPHINX_BUILD_COMMAND
             NAMES "sphinx-build.exe" "sphinx-build"
-            PATHS "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/py-env/Scripts"
-                  "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/py-env/bin"
+            PATHS "${projectDir}/${envDirRelative}/Scripts"
+                  "${projectDir}/${envDirRelative}/bin"
             NO_CACHE
             REQUIRED
             NO_DEFAULT_PATH
@@ -204,8 +251,8 @@ function(execute_script args)
     if("${verbose}")
         message(STATUS "create structure")
     endif()
-    if(EXISTS "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/${sourceDirRelative}/${titleFileName}")
-        file(REMOVE_RECURSE "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/${sourceDirRelative}/${titleFileName}")
+    if(EXISTS "${projectDir}/${buildDirRelative}/${sourceDirRelative}/${titleFileName}")
+        file(REMOVE_RECURSE "${projectDir}/${buildDirRelative}/${sourceDirRelative}/${titleFileName}")
     endif()
     string(JOIN "\n" indexRstContent
         ".. toctree::"
@@ -220,11 +267,11 @@ function(execute_script args)
         cmake_path(GET "fileName" STEM fileNameNoExt)
         if("${fileDir}" STREQUAL "")
             string(APPEND indexRstContent "   ${fileNameNoExt}" "\n")
-            file(COPY "${projectDir}/${sourceDirRelative}/${file}" DESTINATION "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/${sourceDirRelative}/${titleFileName}")
+            file(COPY "${projectDir}/${sourceDirRelative}/${file}" DESTINATION "${projectDir}/${buildDirRelative}/${sourceDirRelative}/${titleFileName}")
         else()
             string(APPEND indexRstContent "   ${fileDir}/${fileNameNoExt}" "\n")
-            file(MAKE_DIRECTORY "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/${sourceDirRelative}/${titleFileName}/${fileDir}")
-            file(COPY "${projectDir}/${sourceDirRelative}/${file}" DESTINATION "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/${sourceDirRelative}/${titleFileName}/${fileDir}")
+            file(MAKE_DIRECTORY "${projectDir}/${buildDirRelative}/${sourceDirRelative}/${titleFileName}/${fileDir}")
+            file(COPY "${projectDir}/${sourceDirRelative}/${file}" DESTINATION "${projectDir}/${buildDirRelative}/${sourceDirRelative}/${titleFileName}/${fileDir}")
         endif()
     endforeach()
     foreach(file IN LISTS "extraFiles")
@@ -241,15 +288,15 @@ function(execute_script args)
 
         cmake_path(GET "fileDst" PARENT_PATH fileDir)
         if("${fileDir}" STREQUAL "")
-            file(COPY "${fileSrc}" DESTINATION "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/${sourceDirRelative}/${titleFileName}")
+            file(COPY "${fileSrc}" DESTINATION "${projectDir}/${buildDirRelative}/${sourceDirRelative}/${titleFileName}")
         else()
-            file(MAKE_DIRECTORY "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/${sourceDirRelative}/${titleFileName}/${fileDir}")
-            file(COPY "${fileSrc}" DESTINATION "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/${sourceDirRelative}/${titleFileName}/${fileDir}")
+            file(MAKE_DIRECTORY "${projectDir}/${buildDirRelative}/${sourceDirRelative}/${titleFileName}/${fileDir}")
+            file(COPY "${fileSrc}" DESTINATION "${projectDir}/${buildDirRelative}/${sourceDirRelative}/${titleFileName}/${fileDir}")
         endif()
 
     endforeach()
-    file(WRITE "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/${sourceDirRelative}/${titleFileName}/index.rst" "${indexRstContent}")
-    file(COPY "${projectDir}/${sourceDirRelative}/conf.py" DESTINATION "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/${sourceDirRelative}/${titleFileName}")
+    file(WRITE "${projectDir}/${buildDirRelative}/${sourceDirRelative}/${titleFileName}/index.rst" "${indexRstContent}")
+    file(COPY "${projectDir}/${sourceDirRelative}/conf.py" DESTINATION "${projectDir}/${buildDirRelative}/${sourceDirRelative}/${titleFileName}")
 
     foreach(builder IN LISTS "builders")
 
@@ -257,7 +304,7 @@ function(execute_script args)
         if("${verbose}")
             message(STATUS "build ${builder}")
         endif()
-        if(EXISTS "${projectDir}/${outputDirRelative}/${builder}")
+        if("${clean}" AND EXISTS "${projectDir}/${outputDirRelative}/${builder}")
             file(REMOVE_RECURSE "${projectDir}/${outputDirRelative}/${builder}")
         endif()
         set(flags "")
@@ -279,7 +326,7 @@ function(execute_script args)
                     ${flags}
                     "-b"
                     "${builder}"
-                    "${buildDirRelative}/${currentFileNameNoExt}/${sourceDirRelative}/${titleFileName}"
+                    "${buildDirRelative}/${sourceDirRelative}/${titleFileName}"
                     "${outputDirRelative}/${builder}"
             WORKING_DIRECTORY "${projectDir}"
             COMMAND_ECHO "STDOUT"

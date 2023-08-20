@@ -25,6 +25,7 @@ function(execute_script args)
     set(multiValueKeywords
         "FILE_PATTERNS"
         "EXCLUDES"
+        "CLEAN"
     )
 
     cmake_parse_arguments("${currentFunctionName}" "${options}" "${oneValueKeywords}" "${multiValueKeywords}" "${args}")
@@ -72,13 +73,26 @@ function(execute_script args)
         endforeach()
     endif()
 
+    if("${${currentFunctionName}_CLEAN}")
+        set(clean "TRUE")
+    else()
+        set(clean "FALSE")
+    endif()
+
+    # clean run doxygen
+    if("${clean}" AND EXISTS "${projectDir}/${outputDirRelative}")
+        if("${verbose}")
+            string(TIMESTAMP currentDateTime "%Y-%m-%d %H:%M:%S")
+            message(STATUS "timestamp: '${currentDateTime}' file: '${CMAKE_CURRENT_LIST_FILE}' clean run doxygen")
+        endif()
+        file(REMOVE_RECURSE "${projectDir}/${outputDirRelative}")
+    endif()
+
     # run doxygen
     if(NOT EXISTS "${projectDir}/${outputDirRelative}")
         if("${verbose}")
-            message(STATUS "execute file: '${CMAKE_CURRENT_LIST_FILE}'")
             string(TIMESTAMP currentDateTime "%Y-%m-%d %H:%M:%S")
-            message(STATUS "currentDateTime: '${currentDateTime}'")
-            message(STATUS "run doxygen")
+            message(STATUS "timestamp: '${currentDateTime}' file: '${CMAKE_CURRENT_LIST_FILE}' run doxygen")
         endif()
         string(JOIN "\n" doxygenFileContent
             "PROJECT_NAME = \"${currentFileNameNoExt}\""
