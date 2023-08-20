@@ -8,7 +8,13 @@ namespace exqudens {
 
   /*!
 
-    @brief String utility functions container.
+  @verbatim embed:rst
+  String utility functions container.
+
+  #. Aaa.
+  #. Bbb.
+  #. Ccc.
+  @endverbatim
 
   */
   class EXQUDENS_EXPORT Strings {
