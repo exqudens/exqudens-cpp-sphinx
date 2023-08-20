@@ -25,6 +25,6 @@
 
       #. return new instance
 
-.. item:: USER_REQUIREMENT_3 Requirement 3
+.. item:: REQUIREMENT_3 Requirement 3
 
    Implement `trim` function to remove all spaces from begin and end of the string.

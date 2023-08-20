@@ -20,7 +20,6 @@ function(execute_script args)
     set(oneValueKeywords
         "VERBOSE"
         "SOURCE_DIR"
-        "BUILD_DIR"
         "OUTPUT_DIR"
     )
     set(multiValueKeywords
@@ -48,14 +47,6 @@ function(execute_script args)
         cmake_path(GET "sourceDirRelative" PARENT_PATH sourceDirRelative)
     endif()
 
-    if("${${currentFunctionName}_BUILD_DIR}" STREQUAL "")
-        set(buildDirRelative "build")
-    else()
-        set(buildDirRelative "${${currentFunctionName}_BUILD_DIR}")
-        cmake_path(APPEND buildDirRelative "DIR")
-        cmake_path(GET "buildDirRelative" PARENT_PATH buildDirRelative)
-    endif()
-
     if("${${currentFunctionName}_OUTPUT_DIR}" STREQUAL "")
         set(outputDirRelative "build/doxygen/main")
     else()
@@ -81,20 +72,14 @@ function(execute_script args)
         endforeach()
     endif()
 
-    if("${verbose}")
-        message(STATUS "execute file: '${CMAKE_CURRENT_LIST_FILE}'")
-        string(TIMESTAMP currentDateTime "%Y-%m-%d %H:%M:%S")
-        message(STATUS "currentDateTime: '${currentDateTime}'")
-    endif()
-
     # run doxygen
-    if("${verbose}")
-        message(STATUS "run doxygen")
-    endif()
-    if(EXISTS "${projectDir}/${outputDirRelative}")
-        file(REMOVE_RECURSE "${projectDir}/${outputDirRelative}")
-    endif()
     if(NOT EXISTS "${projectDir}/${outputDirRelative}")
+        if("${verbose}")
+            message(STATUS "execute file: '${CMAKE_CURRENT_LIST_FILE}'")
+            string(TIMESTAMP currentDateTime "%Y-%m-%d %H:%M:%S")
+            message(STATUS "currentDateTime: '${currentDateTime}'")
+            message(STATUS "run doxygen")
+        endif()
         string(JOIN "\n" doxygenFileContent
             "PROJECT_NAME = \"${currentFileNameNoExt}\""
             "OUTPUT_DIRECTORY = \"${outputDirRelative}\""
@@ -116,21 +101,20 @@ function(execute_script args)
             set(excludeContent "EXCLUDE = \"${excludeContent}\"")
             string(APPEND doxygenFileContent "${excludeContent}\n")
         endif()
-        file(WRITE "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/${sourceDirRelative}/Doxyfile" "${doxygenFileContent}")
+        file(WRITE "${projectDir}/${outputDirRelative}/Doxyfile" "${doxygenFileContent}")
 
         find_program(DOXYGEN_COMMAND NAMES "doxygen.exe" "doxygen" PATHS ENV CONAN_PATH ENV PATH REQUIRED NO_CACHE NO_DEFAULT_PATH)
         file(MAKE_DIRECTORY "${projectDir}/${outputDirRelative}")
         execute_process(
-            COMMAND "${DOXYGEN_COMMAND}" "${projectDir}/${buildDirRelative}/${currentFileNameNoExt}/${sourceDirRelative}/Doxyfile"
+            COMMAND "${DOXYGEN_COMMAND}" "${projectDir}/${outputDirRelative}/Doxyfile"
             WORKING_DIRECTORY "${projectDir}"
             COMMAND_ECHO "STDOUT"
             COMMAND_ERROR_IS_FATAL "ANY"
         )
-    endif()
-
-    if("${verbose}")
-        string(TIMESTAMP currentDateTime "%Y-%m-%d %H:%M:%S")
-        message(STATUS "currentDateTime: '${currentDateTime}'")
+        if("${verbose}")
+            string(TIMESTAMP currentDateTime "%Y-%m-%d %H:%M:%S")
+            message(STATUS "currentDateTime: '${currentDateTime}'")
+        endif()
     endif()
 endfunction()
 

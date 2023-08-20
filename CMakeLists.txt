@@ -412,8 +412,26 @@ add_custom_target("conan-export"
     USES_TERMINAL
 )
 
+add_custom_target("sphinx-doc"
+    COMMAND "${CMAKE_COMMAND}" "-P" "cmake/run-doxygen.cmake" "--"
+            SOURCE_DIR "src/main/cpp"
+            OUTPUT_DIR "build/doxygen/main"
+    COMMAND "${CMAKE_COMMAND}" "-P" "cmake/run-doxygen.cmake" "--"
+            SOURCE_DIR "src/test/cpp"
+            OUTPUT_DIR "build/doxygen/test"
+    COMMAND "${CMAKE_COMMAND}" "-P" "cmake/run-sphinx.cmake" "--"
+            VERBOSE "true"
+            OUTPUT_DIR "build/doc/documentation"
+            TITLE "${PROJECT_NAME} documentation"
+            FILES "requirements/requirements.rst"
+                  "designs/designs.rst"
+                  "links/links.rst"
+            EXTRA_FILES "designs/png/structure.png"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+    USES_TERMINAL
+)
 add_custom_target("sphinx-doc-requirements"
-    COMMAND "${CMAKE_COMMAND}" "-E" "rm" "-rf" "build/doc/requirements"
     COMMAND "${CMAKE_COMMAND}" "-P" "cmake/run-sphinx.cmake" "--"
             VERBOSE "true"
             OUTPUT_DIR "build/doc/requirements"
@@ -424,8 +442,6 @@ add_custom_target("sphinx-doc-requirements"
     USES_TERMINAL
 )
 add_custom_target("sphinx-doc-designs"
-    COMMAND "${CMAKE_COMMAND}" "-E" "rm" "-rf" "build/doc/designs"
-    COMMAND "${CMAKE_COMMAND}" "-E" "rm" "-rf" "build/doxygen/main"
     COMMAND "${CMAKE_COMMAND}" "-P" "cmake/run-doxygen.cmake" "--"
             SOURCE_DIR "src/main/cpp"
             OUTPUT_DIR "build/doxygen/main"
@@ -439,9 +455,17 @@ add_custom_target("sphinx-doc-designs"
     VERBATIM
     USES_TERMINAL
 )
+add_custom_target("sphinx-doc-all"
+    COMMAND "${CMAKE_COMMAND}" "-E" "echo" "BUILD_SUCCESSFUL"
+    DEPENDS "sphinx-doc"
+            "sphinx-doc-requirements"
+            "sphinx-doc-designs"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+    USES_TERMINAL
+)
 add_custom_target("sphinx-doc-clean"
-    COMMAND "${CMAKE_COMMAND}" "-E" "rm" "-rf" "build/doxygen"
-    COMMAND "${CMAKE_COMMAND}" "-E" "rm" "-rf" "build/doc"
+    COMMAND "${CMAKE_COMMAND}" "-E" "rm" "-rf" "build/doxygen" "build/doc"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
     USES_TERMINAL

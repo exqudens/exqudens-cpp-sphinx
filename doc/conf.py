@@ -57,6 +57,7 @@ if str(os.getenv('PROJECT_TEST_REPORT_FILES')) != 'None':
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    'sphinx.ext.autosectionlabel',
     'linuxdoc.rstFlatTable',
     'breathe',
     'mlx.traceability',
@@ -66,6 +67,11 @@ extensions = [
 
 templates_path = []
 exclude_patterns = []
+
+# -- Options for AUTO_SECTION_LABEL output -------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/extensions/autosectionlabel.html#configuration
+
+autosectionlabel_prefix_document = True
 
 # -- Options for TRACEABILITY output -------------------------------------------------
 # https://melexis.github.io/sphinx-traceability-extension/configuration.html#configuration
