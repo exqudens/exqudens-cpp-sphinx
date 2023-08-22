@@ -7,7 +7,7 @@ block()
         file(DOWNLOAD
             "https://raw.githubusercontent.com/exqudens/exqudens-cmake/master/src/main/cmake/${fileName}"
             "${CMAKE_CURRENT_BINARY_DIR}/tmp/${fileName}"
-            EXPECTED_MD5 "3db5a119eb1167ae992e88a4ca554079"
+            EXPECTED_MD5 "77dbb00f4b13e88f95151cbccaeca045"
             STATUS downloadStatus
         )
         if("${downloadStatus}" STREQUAL "0;\"No error\"")
@@ -444,7 +444,8 @@ add_custom_target("sphinx-doc-requirements"
     USES_TERMINAL
 )
 add_custom_target("sphinx-doc-designs"
-    COMMAND "${CMAKE_COMMAND}" "-P" "cmake/run-doxygen.cmake" "--"
+    COMMAND "${CMAKE_COMMAND}" "-P" "${PROJECT_BINARY_DIR}/../common/util.cmake" "--" "doxygen"
+            SOURCE_BASE_DIR "${PROJECT_SOURCE_DIR}"
             SOURCE_DIR "src/main/cpp"
             OUTPUT_DIR "build/doxygen/main"
             CLEAN "true"
