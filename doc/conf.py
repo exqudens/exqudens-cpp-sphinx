@@ -4,8 +4,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import sphinx.util
-import os
-import xmltodict
+import json
 import mlx.traceability
 from pathlib import Path
 from datetime import datetime
@@ -14,7 +13,9 @@ from datetime import datetime
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 logger = sphinx.util.logging.getLogger(__name__)
-projectDir = str(os.getenv('PROJECT_DIR'))
+confJson = json.loads(Path(__file__).parent.joinpath('conf.json').read_text())
+logger.info(f"confJson: '{confJson}'")
+projectDir = confJson['PROJECT_DIR']
 logger.info(f"projectDir: '{projectDir}'")
 project = Path(projectDir).joinpath('name-version.txt').read_text().split(':')[0].strip()
 logger.info(f"project: '{project}'")
@@ -24,34 +25,6 @@ release = Path(projectDir).joinpath('name-version.txt').read_text().split(':')[1
 logger.info(f"release: '{release}'")
 rst_prolog = '.. |project| replace:: ' + project + '\n\n'
 rst_prolog += '.. |release| replace:: ' + release + '\n\n'
-if str(os.getenv('PROJECT_TEST_REPORT_FILES')) != 'None':
-    for f in str(os.getenv('PROJECT_TEST_REPORT_FILES')).split(';'):
-        xmlEntry = xmltodict.parse(Path(f).read_text())
-        name = xmlEntry['testsuites']['testsuite']['@name']
-        name += '.'
-        name += xmlEntry['testsuites']['testsuite']['testcase']['@name']
-        timestamp = datetime.strptime(
-            xmlEntry['testsuites']['testsuite']['testcase']['@timestamp'],
-            '%Y-%m-%dT%H:%M:%S.%f'
-        )
-        timestampDate = '{}-{:02d}-{:02d}'.format(
-            timestamp.year,
-            timestamp.month,
-            timestamp.day
-        )
-        rst_prolog += '.. |' + name + '.date' + '| replace:: ' + timestampDate + '\n\n'
-        status = 'PASSED'
-        if (
-                int(xmlEntry['testsuites']['testsuite']['@failures']) > 0
-                or int(xmlEntry['testsuites']['testsuite']['@errors']) > 0
-        ):
-            status = 'FAILED'
-        if (
-                int(xmlEntry['testsuites']['testsuite']['@disabled']) > 0
-                or int(xmlEntry['testsuites']['testsuite']['@skipped']) > 0
-        ):
-            status = 'SKIPPED'
-        rst_prolog += '.. |' + name + '.status' + '| replace:: ' + status + '\n\n'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -102,7 +75,7 @@ html_static_path = [str(Path(mlx.traceability.__file__).parent.joinpath('assets'
 docx_documents = [
     (
         'index',
-        str(os.getenv('PROJECT_TITLE')).replace(' ', '_') + '.docx',
+        confJson['PROJECT_TITLE'].replace(' ', '_') + '.docx',
         {
             'title': project + ' documentation',
             'created': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
@@ -119,7 +92,7 @@ docx_coverpage = False
 # https://rst2pdf.org/static/manual.html#sphinx
 
 pdf_documents = [
-    ('index', str(os.getenv('PROJECT_TITLE')).replace(' ', '_'), release, author)
+    ('index', confJson['PROJECT_TITLE'].replace(' ', '_'), release, author)
 ]
 pdf_use_toc = True
 pdf_use_coverpage = False
