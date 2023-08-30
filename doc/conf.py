@@ -14,7 +14,6 @@ from datetime import datetime
 
 logger = sphinx.util.logging.getLogger(__name__)
 confJson = json.loads(Path(__file__).parent.joinpath('conf.json').read_text())
-logger.info(f"confJson: '{confJson}'")
 projectDir = confJson['PROJECT_DIR']
 logger.info(f"projectDir: '{projectDir}'")
 project = Path(projectDir).joinpath('name-version.txt').read_text().split(':')[0].strip()
@@ -86,6 +85,7 @@ docx_documents = [
     )
 ]
 docx_coverpage = False
+docx_style = '' if 'PROJECT_STYLE_DOCX' not in confJson.keys() or confJson['PROJECT_STYLE_DOCX'] == 'None' else confJson['PROJECT_STYLE_DOCX']
 #docx_pagebreak_before_section = 1
 
 # -- Options for PDF output -------------------------------------------------
