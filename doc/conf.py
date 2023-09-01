@@ -5,7 +5,10 @@
 
 import sphinx.util
 import json
+import inspect
 import mlx.traceability
+import docutils.nodes
+import docxbuilder
 from pathlib import Path
 from datetime import datetime
 
@@ -98,3 +101,48 @@ pdf_use_toc = True
 pdf_use_coverpage = False
 #pdf_break_level = 2
 #pdf_breakside = 'any'
+
+# -- Project functions -----------------------------------------------------
+
+def setup(app):
+    docxbuilder_old_assemble_doctree = getattr(docxbuilder.DocxBuilder, 'assemble_doctree')
+
+    def docxbuilder_new_assemble_doctree(self, master, toctree_only):
+        logger.info(f"{inspect.currentframe().f_code.co_name}")
+        tree = docxbuilder_old_assemble_doctree(self, master, toctree_only)
+        desc_nodes = []
+        for node in tree.traverse():
+            if node.__class__.__name__ == 'desc':
+                node['docxbuilder_new_assemble_doctree_index'] = len(desc_nodes)
+                desc_nodes.append(node)
+        logger.info(f"{inspect.currentframe().f_code.co_name} desc_nodes.size: '{len(desc_nodes)}'")
+        for desc_node_index, desc_node in enumerate(desc_nodes):
+            desc_node_parent = desc_node.parent
+            if desc_node_parent is None:
+                raise Exception(f"desc_node_parent is None")
+            for i, child in enumerate(desc_node_parent):
+                if child.__class__.__name__ == 'desc' and child['docxbuilder_new_assemble_doctree_index'] == desc_node_index:
+                    new_node = docutils.nodes.paragraph()
+                    new_node.append(docutils.nodes.Text('Test-123'))
+                    desc_node_parent[i] = new_node
+
+        logger.info('--- AAA ---')
+        tmp_nodes = tree.traverse()
+        tmp_entries = []
+        for node in tmp_nodes:
+            if isinstance(node, docutils.nodes.Text):
+                entry = []
+                n = node
+                while n is not None:
+                    entry.append(n)
+                    n = n.parent
+                entry.reverse()
+                strings = [i.astext() if isinstance(i, docutils.nodes.Text) else i.__class__.__name__ for i in entry]
+                tmp_entries.append(strings)
+        for entry in tmp_entries:
+            logger.info(f"{entry}")
+        logger.info('--- AAA ---')
+
+        return tree
+
+    setattr(docxbuilder.DocxBuilder, 'assemble_doctree', docxbuilder_new_assemble_doctree)

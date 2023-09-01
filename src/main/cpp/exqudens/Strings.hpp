@@ -10,8 +10,8 @@ namespace exqudens {
   * @verbatim embed:rst:leading-asterisk
   * String utility class.
   *
-  * #. Item-1
-  * #. Item-2
+  * #. Item-3
+  * #. Item-4
   * @endverbatim
   */
   class EXQUDENS_EXPORT Strings {
