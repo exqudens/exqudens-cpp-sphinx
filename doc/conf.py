@@ -131,39 +131,30 @@ def setup(app):
     def docxbuilder_desc_to_container_node(value):
         logger.info(f"{inspect.currentframe().f_code.co_name}")
 
-        expected_value_len = 2
-        expected_value_0_class_name = 'desc_signature'
-        expected_value_1_class_name = 'desc_content'
-        expected_value_0_len = 1
-        expected_value_0_0_class_name = 'desc_signature_line'
-        expected_value_0_0_children_class_names = ['target', 'inline', 'desc_name', 'desc_parameterlist']
-        expected_value_1_len_max = 2
-        expected_value_1_0_class_name = 'paragraph'
+        if len(value) != 2:
+            raise Exception(f"Unexpected value len: {len(value)}")
 
-        if len(value) != expected_value_len:
-            raise Exception(f"Not expected_value_len: {expected_value_len}")
+        if value[0].__class__.__name__ != 'desc_signature':
+            raise Exception(f"Unexpected value[0].__class__.__name__: {value[0].__class__.__name__}")
 
-        if value[0].__class__.__name__ != expected_value_0_class_name:
-            raise Exception(f"Not expected_value_0_class_name: {expected_value_0_class_name}")
+        if value[1].__class__.__name__ != 'desc_content':
+            raise Exception(f"Unexpected value[1].__class__.__name__: {value[1].__class__.__name__}")
 
-        if value[1].__class__.__name__ != expected_value_1_class_name:
-            raise Exception(f"Not expected_value_1_class_name: {expected_value_1_class_name}")
+        if len(value[0]) != 1:
+            raise Exception(f"Unexpected value[0].len: {len(value[0])}")
 
-        if len(value[0]) != expected_value_0_len:
-            raise Exception(f"Not expected_value_0_len: {expected_value_0_len}")
+        if value[0][0].__class__.__name__ != 'desc_signature_line':
+            raise Exception(f"Unexpected value[0][0].__class__.__name__: {value[0][0].__class__.__name__}")
 
-        if value[0][0].__class__.__name__ != expected_value_0_0_class_name:
-            raise Exception(f"Not expected_value_0_0_class_name: {expected_value_0_0_class_name}")
+        for child in value[0][0]:
+            if child.__class__.__name__ not in ['target', 'inline', 'desc_name', 'desc_parameterlist']:
+                raise Exception(f"Unexpected value[0][0].child.__class__.__name__: {child.__class__.__name__}")
 
-        for node in value[0][0]:
-            if node.__class__.__name__ not in expected_value_0_0_children_class_names:
-                raise Exception(f"Not expected_value_0_0_children_class_names: {expected_value_0_0_children_class_names}")
+        if len(value[1]) > 2:
+            raise Exception(f"Unexpected value[1].len: {len(value[1])}")
 
-        if len(value[1]) > expected_value_1_len_max:
-            raise Exception(f"Not expected_value_1_len_max: {expected_value_1_len_max}")
-
-        if value[1][0].__class__.__name__ != expected_value_1_0_class_name:
-            raise Exception(f"Not expected_value_1_0_class_name: {expected_value_1_0_class_name}")
+        if value[1][0].__class__.__name__ != 'paragraph':
+            raise Exception(f"Unexpected value[1][0].__class__.__name__: {value[1][0].__class__.__name__}")
 
         result = docutils.nodes.container()
 
@@ -178,19 +169,30 @@ def setup(app):
                 for n in node:
                     paragraph_desc_signature.append(n)
             elif node.__class__.__name__ == 'desc_parameterlist':
-                inline_open_parentheses = docutils.nodes.inline()
-                inline_open_parentheses.append(docutils.nodes.Text('('))
-                paragraph_desc_signature.append(inline_open_parentheses)
-                for n in node:
-                    logger.info(f"AAA: '{len(n)}'")
-                inline_close_parentheses = docutils.nodes.inline()
-                inline_open_parentheses.append(docutils.nodes.Text(')'))
-                paragraph_desc_signature.append(inline_close_parentheses)
+                for n_i, n in enumerate(node):
+                    if n.__class__.__name__ == 'desc_parameter':
+                        for i, inline in enumerate(n):
+                            if i == 0:
+                                inline.insert(0, docutils.nodes.Text('('))
+                            if i == len(n) - 1:
+                                inline.append(docutils.nodes.Text(')'))
+                            paragraph_desc_signature.append(inline)
+                    else:
+                        raise Exception(f"Unexpected value[0][0][{n_i}].__class__.__name__: '{n.__class__.__name__}'")
 
         result.append(paragraph_desc_signature)
 
         for node in value[1]:
-            result.append(node)
+            if node.__class__.__name__ == 'paragraph' or node.__class__.__name__ == 'container':
+                for n in node:
+                    if n.__class__.__name__ == 'Text':
+                        paragraph = docutils.nodes.paragraph()
+                        paragraph.append(n)
+                        result.append(paragraph)
+                    else:
+                        result.append(n)
+            else:
+                raise Exception(f"Unexpected node.__class__.__name__: '{node.__class__.__name__}'")
 
         return result
 
