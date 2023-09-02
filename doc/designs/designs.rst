@@ -9,4 +9,4 @@ Number List.
 
 .. doxygenclass:: exqudens::Strings
   :project: main
-  :members: __NONE__
+  :members: ltrim

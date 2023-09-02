@@ -90,6 +90,9 @@ docx_documents = [
 docx_coverpage = False
 docx_style = '' if 'PROJECT_STYLE_DOCX' not in confJson.keys() or confJson['PROJECT_STYLE_DOCX'] == 'None' else confJson['PROJECT_STYLE_DOCX']
 #docx_pagebreak_before_section = 1
+docxbuilder_new_assemble_doctree_apply = True
+docxbuilder_new_assemble_doctree_log_node_before = True
+docxbuilder_new_assemble_doctree_log_node_after = True
 
 # -- Options for PDF output -------------------------------------------------
 # https://rst2pdf.org/static/manual.html#sphinx
@@ -102,34 +105,16 @@ pdf_use_coverpage = False
 #pdf_break_level = 2
 #pdf_breakside = 'any'
 
-# -- Project functions -----------------------------------------------------
+# -- Project setup -----------------------------------------------------
 
 def setup(app):
     docxbuilder_old_assemble_doctree = getattr(docxbuilder.DocxBuilder, 'assemble_doctree')
 
-    def docxbuilder_new_assemble_doctree(self, master, toctree_only):
-        logger.info(f"{inspect.currentframe().f_code.co_name}")
-        tree = docxbuilder_old_assemble_doctree(self, master, toctree_only)
-        desc_nodes = []
-        for node in tree.traverse():
-            if node.__class__.__name__ == 'desc':
-                node['docxbuilder_new_assemble_doctree_index'] = len(desc_nodes)
-                desc_nodes.append(node)
-        logger.info(f"{inspect.currentframe().f_code.co_name} desc_nodes.size: '{len(desc_nodes)}'")
-        for desc_node_index, desc_node in enumerate(desc_nodes):
-            desc_node_parent = desc_node.parent
-            if desc_node_parent is None:
-                raise Exception(f"desc_node_parent is None")
-            for i, child in enumerate(desc_node_parent):
-                if child.__class__.__name__ == 'desc' and child['docxbuilder_new_assemble_doctree_index'] == desc_node_index:
-                    new_node = docutils.nodes.paragraph()
-                    new_node.append(docutils.nodes.Text('Test-123'))
-                    desc_node_parent[i] = new_node
-
-        logger.info('--- AAA ---')
-        tmp_nodes = tree.traverse()
-        tmp_entries = []
-        for node in tmp_nodes:
+    def log_node(node):
+        logger.info(f"{inspect.currentframe().f_code.co_name} start")
+        nodes = node.traverse()
+        entries = []
+        for node in nodes:
             if isinstance(node, docutils.nodes.Text):
                 entry = []
                 n = node
@@ -138,10 +123,113 @@ def setup(app):
                     n = n.parent
                 entry.reverse()
                 strings = [i.astext() if isinstance(i, docutils.nodes.Text) else i.__class__.__name__ for i in entry]
-                tmp_entries.append(strings)
-        for entry in tmp_entries:
+                entries.append(strings)
+        for entry in entries:
             logger.info(f"{entry}")
-        logger.info('--- AAA ---')
+        logger.info(f"{inspect.currentframe().f_code.co_name} end")
+
+    def docxbuilder_desc_to_container_node(value):
+        logger.info(f"{inspect.currentframe().f_code.co_name}")
+
+        expected_value_len = 2
+        expected_value_0_class_name = 'desc_signature'
+        expected_value_1_class_name = 'desc_content'
+        expected_value_0_len = 1
+        expected_value_0_0_class_name = 'desc_signature_line'
+        expected_value_0_0_children_class_names = ['target', 'inline', 'desc_name', 'desc_parameterlist']
+        expected_value_1_len_max = 2
+        expected_value_1_0_class_name = 'paragraph'
+
+        if len(value) != expected_value_len:
+            raise Exception(f"Not expected_value_len: {expected_value_len}")
+
+        if value[0].__class__.__name__ != expected_value_0_class_name:
+            raise Exception(f"Not expected_value_0_class_name: {expected_value_0_class_name}")
+
+        if value[1].__class__.__name__ != expected_value_1_class_name:
+            raise Exception(f"Not expected_value_1_class_name: {expected_value_1_class_name}")
+
+        if len(value[0]) != expected_value_0_len:
+            raise Exception(f"Not expected_value_0_len: {expected_value_0_len}")
+
+        if value[0][0].__class__.__name__ != expected_value_0_0_class_name:
+            raise Exception(f"Not expected_value_0_0_class_name: {expected_value_0_0_class_name}")
+
+        for node in value[0][0]:
+            if node.__class__.__name__ not in expected_value_0_0_children_class_names:
+                raise Exception(f"Not expected_value_0_0_children_class_names: {expected_value_0_0_children_class_names}")
+
+        if len(value[1]) > expected_value_1_len_max:
+            raise Exception(f"Not expected_value_1_len_max: {expected_value_1_len_max}")
+
+        if value[1][0].__class__.__name__ != expected_value_1_0_class_name:
+            raise Exception(f"Not expected_value_1_0_class_name: {expected_value_1_0_class_name}")
+
+        result = docutils.nodes.container()
+
+        paragraph_desc_signature = docutils.nodes.paragraph()
+
+        for node in value[0][0]:
+            if node.__class__.__name__ == 'target':
+                pass
+            elif node.__class__.__name__ == 'inline':
+                paragraph_desc_signature.append(node)
+            elif node.__class__.__name__ == 'desc_name':
+                for n in node:
+                    paragraph_desc_signature.append(n)
+            elif node.__class__.__name__ == 'desc_parameterlist':
+                inline_open_parentheses = docutils.nodes.inline()
+                inline_open_parentheses.append(docutils.nodes.Text('('))
+                paragraph_desc_signature.append(inline_open_parentheses)
+                for n in node:
+                    logger.info(f"AAA: '{len(n)}'")
+                inline_close_parentheses = docutils.nodes.inline()
+                inline_open_parentheses.append(docutils.nodes.Text(')'))
+                paragraph_desc_signature.append(inline_close_parentheses)
+
+        result.append(paragraph_desc_signature)
+
+        for node in value[1]:
+            result.append(node)
+
+        return result
+
+    def docxbuilder_new_assemble_doctree(self, master, toctree_only):
+        logger.info(f"{inspect.currentframe().f_code.co_name}")
+        tree = docxbuilder_old_assemble_doctree(self, master, toctree_only)
+
+        if docxbuilder_new_assemble_doctree_log_node_before:
+            logger.info(f"{inspect.currentframe().f_code.co_name} log node before")
+            log_node(tree)
+
+        if not docxbuilder_new_assemble_doctree_apply:
+            return tree
+
+        logger.info(f"{inspect.currentframe().f_code.co_name} find 'desc' nodes")
+        desc_nodes = []
+        for node in tree.traverse():
+            if node.__class__.__name__ == 'desc':
+                node['docxbuilder_new_assemble_doctree_index'] = len(desc_nodes)
+                desc_nodes.append(node)
+        desc_nodes.reverse()
+        logger.info(f"{inspect.currentframe().f_code.co_name} found 'desc' nodes len: '{len(desc_nodes)}'")
+
+        logger.info(f"{inspect.currentframe().f_code.co_name} process")
+        for desc_node_index, desc_node in enumerate(desc_nodes):
+            logger.info(f"{inspect.currentframe().f_code.co_name} process 'desc' node {desc_node_index + 1} of {len(desc_nodes)}")
+            desc_node_parent = desc_node.parent
+            if desc_node_parent is None:
+                raise Exception(f"desc_node_parent is None")
+            docxbuilder_new_assemble_doctree_index = desc_node['docxbuilder_new_assemble_doctree_index']
+            for desc_node_parent_child_index, child in enumerate(desc_node_parent):
+                if child.__class__.__name__ == 'desc' and child['docxbuilder_new_assemble_doctree_index'] == docxbuilder_new_assemble_doctree_index:
+                    old_node = desc_node_parent[desc_node_parent_child_index]
+                    new_node = docxbuilder_desc_to_container_node(old_node)
+                    desc_node_parent[desc_node_parent_child_index] = new_node
+
+        if docxbuilder_new_assemble_doctree_log_node_after:
+            logger.info(f"{inspect.currentframe().f_code.co_name} log node after")
+            log_node(tree)
 
         return tree
 
