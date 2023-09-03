@@ -4,9 +4,9 @@
 
 Number List.
 
-#. Item-1.
-#. Item-2.
+#. Number-Item-1.
+#. Number-Item-2.
 
 .. doxygenclass:: exqudens::Strings
   :project: main
-  :members: ltrim
+  :members:
