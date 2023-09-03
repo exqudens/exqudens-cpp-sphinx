@@ -2,23 +2,11 @@
 |project| |release| designs.
 ############################
 
-*********
-Structure
-*********
+Number List.
 
-.. image:: png/structure.png
+#. Number-Item-1.
+#. Number-Item-2.
 
-***
-API
-***
-
-.. item:: DESIGN_1 Design 1
-
-    List AAA-1:
-
-    #. Item BBB-222.
-    #. Item CCC-333.
-
-   .. doxygenclass:: exqudens::Strings
-      :project: main
-      :members: __NONE__
+.. doxygenclass:: exqudens::Strings
+  :project: main
+  :members:

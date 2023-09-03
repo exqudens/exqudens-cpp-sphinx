@@ -10,8 +10,8 @@ namespace exqudens {
   * @verbatim embed:rst:leading-asterisk
   * String utility class.
   *
-  * #. Item-1
-  * #. Item-2
+  * #. Number-Item-3
+  * #. Number-Item-4
   * @endverbatim
   */
   class EXQUDENS_EXPORT Strings {
@@ -19,17 +19,27 @@ namespace exqudens {
     public:
 
       /*!
-      * @brief Remove all spaces from begin of the string.
+      * @verbatim embed:rst:leading-asterisk
+      * Remove all spaces from begin of the string.
+      *
+      * #. Number-Item-5
+      * @endverbatim
       */
       static std::string ltrim(const std::string& value);
 
       /*!
-      * @brief Remove all spaces from end of the string.
+      * @verbatim embed:rst:leading-asterisk
+      * Remove all spaces from end of the string.
+      *
+      * - Bullet-Item-1
+      * @endverbatim
       */
       static std::string rtrim(const std::string& value);
 
       /*!
-      * @brief Remove all spaces from begin and end of the string.
+      * @verbatim embed:rst:leading-asterisk
+      * Remove all spaces from begin and end of the string.
+      * @endverbatim
       */
       static std::string trim(const std::string& value);
 
