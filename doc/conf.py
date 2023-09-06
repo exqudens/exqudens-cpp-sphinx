@@ -116,7 +116,7 @@ def setup(app):
         nodes = node.traverse()
         entries = []
         for node in nodes:
-            if isinstance(node, docutils.nodes.Text):
+            if isinstance(node, docutils.nodes.Text) or len(node) == 0:
                 entry = []
                 n = node
                 while n is not None:
@@ -133,6 +133,7 @@ def setup(app):
         extract_from_paragraph = [
             'bullet_list',
             'enumerated_list',
+            'table',
             'math_block'
         ]
         value_nodes = []
@@ -151,6 +152,12 @@ def setup(app):
                         if len(paragraph) > 0:
                             result.append(paragraph)
                             paragraph = docutils.nodes.paragraph()
+                        if n.__class__.__name__ == 'table':
+                            for table_node in n:
+                                if table_node.__class__.__name__ == 'tgroup':
+                                    for tgroup_node in table_node:
+                                        if tgroup_node.__class__.__name__ == 'colspec' and tgroup_node.get('colwidth') == 'auto':
+                                            tgroup_node['colwidth'] = 10000
                         result.append(n)
                     else:
                         paragraph.append(n)

@@ -9,8 +9,18 @@ namespace exqudens {
   /*!
   * @brief String utility class.
   *
-  * -# Number-Item-3
-  * -# Number-Item-4
+  * -# Number-Item-1
+  * -# Number-Item-2
+  *
+  * - Bullet-Item-1
+  * - Bullet-Item-2
+  *
+  * | Right | Center | Left  |
+  * | ----: | :----: | :---- |
+  * | 10    | 10     | 10    |
+  * | 100   | 100    | 100   |
+  * | ^     | 1000   | 1000  |
+  * | 1000  |||
   *
   * @f[
   *    (a + b)^2 = a^2 + 2ab + b^2
