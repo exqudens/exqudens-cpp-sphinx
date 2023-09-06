@@ -91,6 +91,7 @@ docx_coverpage = False
 docx_style = '' if 'PROJECT_STYLE_DOCX' not in confJson.keys() or confJson['PROJECT_STYLE_DOCX'] == 'None' else confJson['PROJECT_STYLE_DOCX']
 #docx_pagebreak_before_section = 1
 docxbuilder_new_assemble_doctree_apply = True
+docxbuilder_new_assemble_doctree_log = True
 docxbuilder_new_assemble_doctree_log_node_before = True
 docxbuilder_new_assemble_doctree_log_node_after = True
 
@@ -129,8 +130,11 @@ def setup(app):
         logger.info(f"{inspect.currentframe().f_code.co_name} end")
 
     def docxbuilder_fix_desc_content(value):
-        logger.info(f"{inspect.currentframe().f_code.co_name}")
-
+        extract_from_paragraph = [
+            'bullet_list',
+            'enumerated_list',
+            'math_block'
+        ]
         value_nodes = []
 
         for node in value:
@@ -140,42 +144,51 @@ def setup(app):
         result.clear()
 
         for node in value_nodes:
-            if node.__class__.__name__ == 'paragraph' or node.__class__.__name__ == 'container':
+            if node.__class__.__name__ == 'paragraph':
+                paragraph = docutils.nodes.paragraph()
                 for n in node:
-                    if n.__class__.__name__ == 'Text':
-                        paragraph = docutils.nodes.paragraph()
-                        paragraph.append(n)
-                        result.append(paragraph)
-                    else:
+                    if n.__class__.__name__ in extract_from_paragraph:
+                        if len(paragraph) > 0:
+                            result.append(paragraph)
+                            paragraph = docutils.nodes.paragraph()
                         result.append(n)
+                    else:
+                        paragraph.append(n)
+                if len(paragraph) > 0:
+                    result.append(paragraph)
             else:
-                raise Exception(f"Unexpected node.__class__.__name__: '{node.__class__.__name__}'")
+                result.append(node)
 
         return result
 
     def docxbuilder_new_assemble_doctree(self, master, toctree_only):
-        logger.info(f"{inspect.currentframe().f_code.co_name}")
+        if docxbuilder_new_assemble_doctree_log:
+            logger.info(f"{inspect.currentframe().f_code.co_name}")
         tree = docxbuilder_old_assemble_doctree(self, master, toctree_only)
 
-        if docxbuilder_new_assemble_doctree_log_node_before:
+        if docxbuilder_new_assemble_doctree_log and docxbuilder_new_assemble_doctree_log_node_before:
             logger.info(f"{inspect.currentframe().f_code.co_name} log node before")
             log_node(tree)
 
         if not docxbuilder_new_assemble_doctree_apply:
             return tree
 
-        logger.info(f"{inspect.currentframe().f_code.co_name} find 'desc_content' nodes")
+        if docxbuilder_new_assemble_doctree_log:
+            logger.info(f"{inspect.currentframe().f_code.co_name} find 'desc_content' nodes")
         desc_content_nodes = []
         for node in tree.traverse():
             if node.__class__.__name__ == 'desc_content':
                 node['docxbuilder_new_assemble_doctree_index'] = len(desc_content_nodes)
                 desc_content_nodes.append(node)
         desc_content_nodes.reverse()
-        logger.info(f"{inspect.currentframe().f_code.co_name} found 'desc' nodes len: '{len(desc_content_nodes)}'")
+        if docxbuilder_new_assemble_doctree_log:
+            logger.info(f"{inspect.currentframe().f_code.co_name} found 'desc_content' nodes len: '{len(desc_content_nodes)}'")
 
-        logger.info(f"{inspect.currentframe().f_code.co_name} process")
+        if docxbuilder_new_assemble_doctree_log:
+            logger.info(f"{inspect.currentframe().f_code.co_name} process")
         for desc_content_node_index, desc_content_node in enumerate(desc_content_nodes):
-            logger.info(f"{inspect.currentframe().f_code.co_name} process 'desc' node {desc_content_node_index + 1} of {len(desc_content_nodes)}")
+            if docxbuilder_new_assemble_doctree_log:
+                logger.info(f"{inspect.currentframe().f_code.co_name} process 'desc_content' node {desc_content_node_index + 1} of {len(desc_content_nodes)}")
             desc_content_node_parent = desc_content_node.parent
             if desc_content_node_parent is None:
                 raise Exception(f"desc_content_node_parent is None")
@@ -189,7 +202,7 @@ def setup(app):
                     new_node = docxbuilder_fix_desc_content(old_node)
                     desc_content_node_parent[child_index] = new_node
 
-        if docxbuilder_new_assemble_doctree_log_node_after:
+        if docxbuilder_new_assemble_doctree_log and docxbuilder_new_assemble_doctree_log_node_after:
             logger.info(f"{inspect.currentframe().f_code.co_name} log node after")
             log_node(tree)
 

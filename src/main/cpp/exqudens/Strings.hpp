@@ -7,18 +7,16 @@
 namespace exqudens {
 
   /*!
-  * @verbatim embed:rst:leading-asterisk
-  * String utility class.
+  * @brief String utility class.
   *
-  * #. Number-Item-3
-  * #. Number-Item-4
+  * -# Number-Item-3
+  * -# Number-Item-4
   *
-  * .. math::
-  *
+  * @f[
   *    (a + b)^2 = a^2 + 2ab + b^2
+  * @f]
   *
-  * Formula :math:`a^2 + b^2 = c^2`
-  * @endverbatim
+  * where @f$a = 2@f$
   */
   class EXQUDENS_EXPORT Strings {
 
@@ -29,6 +27,13 @@ namespace exqudens {
       * Remove all spaces from begin of the string.
       *
       * #. Number-Item-5
+      * #. Number-Item-6
+      *
+      * .. math::
+      *
+      *    (a + b)^2 = a^2 + 2ab + b^2
+      *
+      * Formula :math:`a^2 + b^2 = c^2`
       * @endverbatim
       */
       static std::string ltrim(const std::string& value);
@@ -36,7 +41,7 @@ namespace exqudens {
       /*!
       * @brief Remove all spaces from end of the string.
       *
-      * -# Number-Item-6
+      * - Bullet-Item-7
       */
       static std::string rtrim(const std::string& value);
 
