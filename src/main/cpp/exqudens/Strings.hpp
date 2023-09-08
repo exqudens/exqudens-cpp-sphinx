@@ -11,9 +11,17 @@ namespace exqudens {
   *
   * -# Number-Item-1
   * -# Number-Item-2
+  *     -# Nested-Number-Item-1
+  *     -# Nested-Number-Item-2
+  *         -# Nested-Nested-Number-Item-1
+  *         -# Nested-Nested-Number-Item-1
   *
   * - Bullet-Item-1
   * - Bullet-Item-2
+  *     - Nested-Bullet-Item-1
+  *     - Nested-Bullet-Item-2
+  *         - Nested-Nested-Bullet-Item-1
+  *         - Nested-Nested-Bullet-Item-2
   *
   * | Right | Center | Left  |
   * | ----: | :----: | :---- |

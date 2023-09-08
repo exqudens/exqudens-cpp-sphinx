@@ -129,13 +129,26 @@ def setup(app):
             logger.info(f"{entry}")
         logger.info(f"{inspect.currentframe().f_code.co_name} end")
 
-    def docxbuilder_fix_desc_content(value):
-        extract_from_paragraph = [
-            'bullet_list',
-            'enumerated_list',
-            'table',
-            'math_block'
-        ]
+    def find_nodes(node, class_names=None, index_key=None, include_self=False):
+        if class_names is None:
+            raise Exception("Unspecified 'class_names'")
+
+        if index_key is None:
+            raise Exception("Unspecified 'index_key'")
+
+        result = []
+
+        for n in node.traverse(include_self=include_self):
+            if n.__class__.__name__ in class_names:
+                n[index_key] = len(result)
+                result.append(n)
+
+        return result
+
+    def docxbuilder_unwrap(value, class_names=None):
+        if class_names is None:
+            raise Exception("Unspecified 'class_names'")
+
         value_nodes = []
 
         for node in value:
@@ -148,7 +161,7 @@ def setup(app):
             if node.__class__.__name__ == 'paragraph':
                 paragraph = docutils.nodes.paragraph()
                 for n in node:
-                    if n.__class__.__name__ in extract_from_paragraph:
+                    if n.__class__.__name__ in class_names:
                         if len(paragraph) > 0:
                             result.append(paragraph)
                             paragraph = docutils.nodes.paragraph()
@@ -165,6 +178,32 @@ def setup(app):
                     result.append(paragraph)
             else:
                 result.append(node)
+
+        return result
+
+    def docxbuilder_fix_desc_content(value):
+        extract_from_paragraph = [
+            'bullet_list',
+            'enumerated_list',
+            'table',
+            'math_block'
+        ]
+        result = docxbuilder_unwrap(value, class_names=extract_from_paragraph)
+
+        target_index_key = 'docxbuilder_fix_desc_content_list_item_index'
+        target_class_name = 'list_item'
+        target_nodes = find_nodes(result, class_names = [target_class_name], index_key = target_index_key)
+        target_nodes.reverse()
+        for node in target_nodes:
+            node_parent = node.parent
+            if node_parent is None:
+                raise Exception("'node_parent' is 'None'")
+            target_index = node[target_index_key]
+            for child_index, child in enumerate(node_parent):
+                if child.__class__.__name__ == target_class_name and child[target_index_key] == target_index:
+                    old_node = node_parent[child_index]
+                    new_node = docxbuilder_unwrap(old_node, class_names=extract_from_paragraph)
+                    node_parent[child_index] = new_node
 
         return result
 
