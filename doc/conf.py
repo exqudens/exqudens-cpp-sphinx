@@ -88,12 +88,12 @@ docx_documents = [
     )
 ]
 docx_coverpage = False
-docx_style = '' if 'PROJECT_STYLE_DOCX' not in confJson.keys() or confJson['PROJECT_STYLE_DOCX'] == 'None' else confJson['PROJECT_STYLE_DOCX']
-#docx_pagebreak_before_section = 1
+docx_style = '' if confJson.get('PROJECT_DOCX_STYLE') is None else confJson['PROJECT_DOCX_STYLE']
+docx_pagebreak_before_section = int('0' if confJson.get('PROJECT_DOCX_PAGEBREAK_BEFORE_SECTION') is None else confJson['PROJECT_DOCX_PAGEBREAK_BEFORE_SECTION'])
 docxbuilder_new_assemble_doctree_apply = True
-docxbuilder_new_assemble_doctree_log = True
-docxbuilder_new_assemble_doctree_log_node_before = True
-docxbuilder_new_assemble_doctree_log_node_after = True
+docxbuilder_new_assemble_doctree_log = False
+docxbuilder_new_assemble_doctree_log_node_before = False
+docxbuilder_new_assemble_doctree_log_node_after = False
 
 # -- Options for PDF output -------------------------------------------------
 # https://rst2pdf.org/static/manual.html#sphinx
@@ -190,8 +190,8 @@ def setup(app):
         ]
         result = docxbuilder_unwrap(value, class_names=extract_from_paragraph)
 
-        target_index_key = 'docxbuilder_fix_desc_content_list_item_index'
         target_class_name = 'list_item'
+        target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
         target_nodes = find_nodes(result, class_names = [target_class_name], index_key = target_index_key)
         target_nodes.reverse()
         for node in target_nodes:
@@ -204,6 +204,16 @@ def setup(app):
                     old_node = node_parent[child_index]
                     new_node = docxbuilder_unwrap(old_node, class_names=extract_from_paragraph)
                     node_parent[child_index] = new_node
+
+        target_class_name = 'enumerated_list'
+        target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
+        target_nodes = find_nodes(result, class_names = [target_class_name], index_key = target_index_key)
+        target_nodes.reverse()
+        for node in target_nodes:
+            node['enumtype'] = 'arabic'
+            node['prefix'] = ''
+            node['suffix'] = '.'
+            node['start'] = 1
 
         return result
 
