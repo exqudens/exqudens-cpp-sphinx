@@ -7,7 +7,7 @@ block()
         file(DOWNLOAD
             "https://raw.githubusercontent.com/exqudens/exqudens-cmake/master/src/main/cmake/${fileName}"
             "${CMAKE_CURRENT_BINARY_DIR}/tmp/${fileName}"
-            EXPECTED_MD5 "e8a3c6be452c87454dbc08e82a4aad10"
+            EXPECTED_MD5 "45e1ffe4458069384764afcfd1e8a2c0"
             STATUS downloadStatus
         )
         if("${downloadStatus}" STREQUAL "0;\"No error\"")
@@ -456,6 +456,7 @@ add_custom_target("sphinx-doc-designs"
             SOURCE_BASE_DIR "${PROJECT_SOURCE_DIR}"
             SOURCE_DIR "src/main/cpp"
             OUTPUT_DIR "build/doxygen/main"
+            DOXYGEN_ADD_TAGS "IMAGE_PATH=src/main/resources/png"
             CLEAN "true"
     COMMAND "${CMAKE_COMMAND}" "-P" "${PROJECT_BINARY_DIR}/../common/util.cmake" "--" "sphinx"
             SOURCE_BASE_DIR "${PROJECT_SOURCE_DIR}"

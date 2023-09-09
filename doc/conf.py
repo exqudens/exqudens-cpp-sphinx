@@ -186,13 +186,14 @@ def setup(app):
             'bullet_list',
             'enumerated_list',
             'table',
-            'math_block'
+            'math_block',
+            'image'
         ]
         result = docxbuilder_unwrap(value, class_names=extract_from_paragraph)
 
         target_class_name = 'list_item'
         target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
-        target_nodes = find_nodes(result, class_names = [target_class_name], index_key = target_index_key)
+        target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
         target_nodes.reverse()
         for node in target_nodes:
             node_parent = node.parent
@@ -207,7 +208,7 @@ def setup(app):
 
         target_class_name = 'enumerated_list'
         target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
-        target_nodes = find_nodes(result, class_names = [target_class_name], index_key = target_index_key)
+        target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
         target_nodes.reverse()
         for node in target_nodes:
             node['enumtype'] = 'arabic'
@@ -231,11 +232,9 @@ def setup(app):
 
         if docxbuilder_new_assemble_doctree_log:
             logger.info(f"{inspect.currentframe().f_code.co_name} find 'desc_content' nodes")
-        desc_content_nodes = []
-        for node in tree.traverse():
-            if node.__class__.__name__ == 'desc_content':
-                node['docxbuilder_new_assemble_doctree_index'] = len(desc_content_nodes)
-                desc_content_nodes.append(node)
+        class_name = 'desc_content'
+        index_key = 'docxbuilder_new_assemble_doctree_' + class_name + '_index'
+        desc_content_nodes = find_nodes(tree, class_names=[class_name], index_key=index_key)
         desc_content_nodes.reverse()
         if docxbuilder_new_assemble_doctree_log:
             logger.info(f"{inspect.currentframe().f_code.co_name} found 'desc_content' nodes len: '{len(desc_content_nodes)}'")
@@ -248,11 +247,11 @@ def setup(app):
             desc_content_node_parent = desc_content_node.parent
             if desc_content_node_parent is None:
                 raise Exception(f"desc_content_node_parent is None")
-            docxbuilder_new_assemble_doctree_index = desc_content_node['docxbuilder_new_assemble_doctree_index']
+            index_value = desc_content_node[index_key]
             for child_index, child in enumerate(desc_content_node_parent):
                 if (
                         child.__class__.__name__ == 'desc_content'
-                        and child['docxbuilder_new_assemble_doctree_index'] == docxbuilder_new_assemble_doctree_index
+                        and child[index_key] == index_value
                 ):
                     old_node = desc_content_node_parent[child_index]
                     new_node = docxbuilder_fix_desc_content(old_node)

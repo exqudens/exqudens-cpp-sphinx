@@ -35,6 +35,8 @@ namespace exqudens {
   * @f]
   *
   * where @f$a = 2@f$
+  *
+  * @image xml structure-1.png "My application" width=3cm
   */
   class EXQUDENS_EXPORT Strings {
 
