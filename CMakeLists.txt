@@ -7,7 +7,7 @@ block()
         file(DOWNLOAD
             "https://raw.githubusercontent.com/exqudens/exqudens-cmake/master/src/main/cmake/${fileName}"
             "${CMAKE_CURRENT_BINARY_DIR}/tmp/${fileName}"
-            EXPECTED_MD5 "0d86f267ddbe3d896b2c0c6993e00d23"
+            EXPECTED_MD5 "2c0cf2e77d3be99e5ec8d2e2c0b4bd46"
             STATUS downloadStatus
         )
         if("${downloadStatus}" STREQUAL "0;\"No error\"")
@@ -469,7 +469,7 @@ add_custom_target("sphinx-doc-designs"
             FILES "designs/designs.rst"
             EXTRA_FILES "designs/png/structure.png"
                         #"docutils.conf"
-            BUILDERS "docx"
+            #BUILDERS "docx"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
     USES_TERMINAL
