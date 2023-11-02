@@ -63,7 +63,11 @@ breathe_projects = {
     'main': str(Path(projectDir).joinpath('build', 'doxygen', 'main', 'xml')),
     'test': str(Path(projectDir).joinpath('build', 'doxygen', 'test', 'xml'))
 }
-breathe_default_project = "main"
+breathe_domain_by_extension = {
+    'hpp': 'cpp',
+    'cpp': 'cpp'
+}
+breathe_default_project = confJson['PROJECT_BREATHE_DEFAULT']
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -189,6 +193,9 @@ def setup(app):
             'math_block',
             'image'
         ]
+        wrap_with_paragraph = [
+            'emphasis'
+        ]
         result = docxbuilder_unwrap(value, class_names=extract_from_paragraph)
 
         target_class_name = 'list_item'
@@ -215,6 +222,17 @@ def setup(app):
             node['prefix'] = ''
             node['suffix'] = '.'
             node['start'] = 1
+
+        target_class_name = 'container'
+        target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
+        target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
+        target_nodes.reverse()
+        for node in target_nodes:
+            for child_index, child in enumerate(node):
+                if child.__class__.__name__ in wrap_with_paragraph:
+                    paragraph = docutils.nodes.paragraph()
+                    paragraph.append(child)
+                    node[child_index] = paragraph
 
         return result
 
