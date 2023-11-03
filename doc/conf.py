@@ -187,8 +187,10 @@ def setup(app):
 
     def docxbuilder_fix_desc_content(value):
         extract_from_paragraph = [
+            'paragraph',
             'bullet_list',
             'enumerated_list',
+            'definition_list',
             'table',
             'math_block',
             'image'
@@ -199,6 +201,21 @@ def setup(app):
         result = docxbuilder_unwrap(value, class_names=extract_from_paragraph)
 
         target_class_name = 'list_item'
+        target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
+        target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
+        target_nodes.reverse()
+        for node in target_nodes:
+            node_parent = node.parent
+            if node_parent is None:
+                raise Exception("'node_parent' is 'None'")
+            target_index = node[target_index_key]
+            for child_index, child in enumerate(node_parent):
+                if child.__class__.__name__ == target_class_name and child[target_index_key] == target_index:
+                    old_node = node_parent[child_index]
+                    new_node = docxbuilder_unwrap(old_node, class_names=extract_from_paragraph)
+                    node_parent[child_index] = new_node
+
+        target_class_name = 'definition'
         target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
         target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
         target_nodes.reverse()

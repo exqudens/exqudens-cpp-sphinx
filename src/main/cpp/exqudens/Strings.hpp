@@ -1,3 +1,12 @@
+/*!
+* @copyright Copyright-Line-1
+* @n
+* Copyright-Line-2
+* Copyright-Line-3
+* @author Exqudens
+* @date 2023
+*/
+
 #pragma once
 
 #include <string>
@@ -51,10 +60,14 @@ namespace exqudens {
       *
       * .. math::
       *
-      *    (a + b)^2 = a^2 + 2ab + b^2
+      *    (a + b)^3 = a^3 + 3ab + b^3
       *
-      * Formula :math:`a^2 + b^2 = c^2`
+      * Formula :math:`a^3 + b^3 = c^3`
       * @endverbatim
+      *
+      * @param value Input string.
+      *
+      * @return Result string.
       */
       static std::string ltrim(const std::string& value);
 
@@ -62,6 +75,10 @@ namespace exqudens {
       * @brief Remove all spaces from end of the string.
       *
       * - Bullet-Item-7
+      *
+      * @param value Input string.
+      *
+      * @return Result string.
       */
       static std::string rtrim(const std::string& value);
 
