@@ -435,6 +435,7 @@ add_custom_target("sphinx-doc"
                   "designs/designs.rst"
                   "links/links.rst"
             EXTRA_FILES "designs/png/structure.png"
+            BUILDERS "html" "docx"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
     USES_TERMINAL
@@ -448,6 +449,7 @@ add_custom_target("sphinx-doc-requirements"
             OUTPUT_DIR "build/doc/requirements"
             TYPE "requirements"
             FILES "requirements/requirements.rst"
+            BUILDERS "html" "docx"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
     USES_TERMINAL
@@ -471,7 +473,7 @@ add_custom_target("sphinx-doc-designs"
             FILES "designs/designs.rst"
             EXTRA_FILES "designs/png/structure.png"
                         #"docutils.conf"
-            #BUILDERS "docx"
+            BUILDERS "html" "docx"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
     USES_TERMINAL
@@ -495,7 +497,7 @@ add_custom_target("sphinx-doc-designs-1"
             FILES "designs/designs-1.rst"
             EXTRA_FILES "designs/png/structure.png"
                         #"docutils.conf"
-            #BUILDERS "docx"
+            BUILDERS "html" "docx"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
     USES_TERMINAL

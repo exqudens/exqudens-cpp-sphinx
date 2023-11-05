@@ -1,4 +1,6 @@
 /*!
+* @file exqudens/Strings.hpp
+* @brief String processing.
 * @copyright Copyright-Line-1
 * @n
 * Copyright-Line-2

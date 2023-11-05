@@ -64,6 +64,8 @@ breathe_projects = {
     'test': str(Path(projectDir).joinpath('build', 'doxygen', 'test', 'xml'))
 }
 breathe_domain_by_extension = {
+    'h': 'c',
+    'c': 'c',
     'hpp': 'cpp',
     'cpp': 'cpp'
 }
@@ -169,12 +171,6 @@ def setup(app):
                         if len(paragraph) > 0:
                             result.append(paragraph)
                             paragraph = docutils.nodes.paragraph()
-                        if n.__class__.__name__ == 'table':
-                            for table_node in n:
-                                if table_node.__class__.__name__ == 'tgroup':
-                                    for tgroup_node in table_node:
-                                        if tgroup_node.__class__.__name__ == 'colspec' and tgroup_node.get('colwidth') == 'auto':
-                                            tgroup_node['colwidth'] = 10000
                         result.append(n)
                     else:
                         paragraph.append(n)
@@ -185,77 +181,86 @@ def setup(app):
 
         return result
 
-    def docxbuilder_fix_desc_content(value):
-        extract_from_paragraph = [
-            'paragraph',
-            'bullet_list',
-            'enumerated_list',
-            'definition_list',
-            'table',
-            'math_block',
-            'image'
-        ]
-        wrap_with_paragraph = [
-            'emphasis'
-        ]
-        result = docxbuilder_unwrap(value, class_names=extract_from_paragraph)
+    def docxbuilder_fix_node(value):
+        if value.__class__.__name__ == 'table':
+            for table_node in value:
+                if table_node.__class__.__name__ == 'tgroup':
+                    for tgroup_node in table_node:
+                        if tgroup_node.__class__.__name__ == 'colspec' and tgroup_node.get('colwidth') == 'auto':
+                            tgroup_node['colwidth'] = 10000
+            return value
+        else:
+            extract_from_paragraph = [
+                'paragraph',
+                'bullet_list',
+                'enumerated_list',
+                'definition_list',
+                'table',
+                'math_block',
+                'image'
+            ]
+            wrap_with_paragraph = [
+                'emphasis'
+            ]
+            result = docxbuilder_unwrap(value, class_names=extract_from_paragraph)
 
-        target_class_name = 'list_item'
-        target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
-        target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
-        target_nodes.reverse()
-        for node in target_nodes:
-            node_parent = node.parent
-            if node_parent is None:
-                raise Exception("'node_parent' is 'None'")
-            target_index = node[target_index_key]
-            for child_index, child in enumerate(node_parent):
-                if child.__class__.__name__ == target_class_name and child[target_index_key] == target_index:
-                    old_node = node_parent[child_index]
-                    new_node = docxbuilder_unwrap(old_node, class_names=extract_from_paragraph)
-                    node_parent[child_index] = new_node
+            target_class_name = 'list_item'
+            target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
+            target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
+            target_nodes.reverse()
+            for node in target_nodes:
+                node_parent = node.parent
+                if node_parent is None:
+                    raise Exception("'node_parent' is 'None'")
+                target_index = node[target_index_key]
+                for child_index, child in enumerate(node_parent):
+                    if child.__class__.__name__ == target_class_name and child[target_index_key] == target_index:
+                        old_node = node_parent[child_index]
+                        new_node = docxbuilder_unwrap(old_node, class_names=extract_from_paragraph)
+                        node_parent[child_index] = new_node
 
-        target_class_name = 'definition'
-        target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
-        target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
-        target_nodes.reverse()
-        for node in target_nodes:
-            node_parent = node.parent
-            if node_parent is None:
-                raise Exception("'node_parent' is 'None'")
-            target_index = node[target_index_key]
-            for child_index, child in enumerate(node_parent):
-                if child.__class__.__name__ == target_class_name and child[target_index_key] == target_index:
-                    old_node = node_parent[child_index]
-                    new_node = docxbuilder_unwrap(old_node, class_names=extract_from_paragraph)
-                    node_parent[child_index] = new_node
+            target_class_name = 'definition'
+            target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
+            target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
+            target_nodes.reverse()
+            for node in target_nodes:
+                node_parent = node.parent
+                if node_parent is None:
+                    raise Exception("'node_parent' is 'None'")
+                target_index = node[target_index_key]
+                for child_index, child in enumerate(node_parent):
+                    if child.__class__.__name__ == target_class_name and child[target_index_key] == target_index:
+                        old_node = node_parent[child_index]
+                        new_node = docxbuilder_unwrap(old_node, class_names=extract_from_paragraph)
+                        node_parent[child_index] = new_node
 
-        target_class_name = 'enumerated_list'
-        target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
-        target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
-        target_nodes.reverse()
-        for node in target_nodes:
-            node['enumtype'] = 'arabic'
-            node['prefix'] = ''
-            node['suffix'] = '.'
-            node['start'] = 1
+            target_class_name = 'enumerated_list'
+            target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
+            target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
+            target_nodes.reverse()
+            for node in target_nodes:
+                node['enumtype'] = 'arabic'
+                node['prefix'] = ''
+                node['suffix'] = '.'
+                node['start'] = 1
 
-        target_class_name = 'container'
-        target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
-        target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
-        target_nodes.reverse()
-        for node in target_nodes:
-            for child_index, child in enumerate(node):
-                if child.__class__.__name__ in wrap_with_paragraph:
-                    paragraph = docutils.nodes.paragraph()
-                    paragraph.append(child)
-                    node[child_index] = paragraph
+            target_class_name = 'container'
+            target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
+            target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
+            target_nodes.reverse()
+            for node in target_nodes:
+                for child_index, child in enumerate(node):
+                    if child.__class__.__name__ in wrap_with_paragraph:
+                        paragraph = docutils.nodes.paragraph()
+                        paragraph.append(child)
+                        node[child_index] = paragraph
 
-        return result
+            return result
 
     def docxbuilder_new_assemble_doctree(self, master, toctree_only):
         if docxbuilder_new_assemble_doctree_log:
             logger.info(f"{inspect.currentframe().f_code.co_name}")
+
         tree = docxbuilder_old_assemble_doctree(self, master, toctree_only)
 
         if docxbuilder_new_assemble_doctree_log and docxbuilder_new_assemble_doctree_log_node_before:
@@ -267,30 +272,37 @@ def setup(app):
 
         if docxbuilder_new_assemble_doctree_log:
             logger.info(f"{inspect.currentframe().f_code.co_name} find 'desc_content' nodes")
-        class_name = 'desc_content'
-        index_key = 'docxbuilder_new_assemble_doctree_' + class_name + '_index'
-        desc_content_nodes = find_nodes(tree, class_names=[class_name], index_key=index_key)
-        desc_content_nodes.reverse()
+
+        class_names = ['section', 'desc_content', 'table']
+        index_key = 'docxbuilder_new_assemble_doctree_index'
+        nodes = find_nodes(tree, class_names=class_names, index_key=index_key)
+        nodes.reverse()
+
         if docxbuilder_new_assemble_doctree_log:
-            logger.info(f"{inspect.currentframe().f_code.co_name} found 'desc_content' nodes len: '{len(desc_content_nodes)}'")
+            logger.info(f"{inspect.currentframe().f_code.co_name} found nodes len: '{len(nodes)}'")
 
         if docxbuilder_new_assemble_doctree_log:
             logger.info(f"{inspect.currentframe().f_code.co_name} process")
-        for desc_content_node_index, desc_content_node in enumerate(desc_content_nodes):
+
+        for node_index, node in enumerate(nodes):
             if docxbuilder_new_assemble_doctree_log:
-                logger.info(f"{inspect.currentframe().f_code.co_name} process 'desc_content' node {desc_content_node_index + 1} of {len(desc_content_nodes)}")
-            desc_content_node_parent = desc_content_node.parent
-            if desc_content_node_parent is None:
-                raise Exception(f"desc_content_node_parent is None")
-            index_value = desc_content_node[index_key]
-            for child_index, child in enumerate(desc_content_node_parent):
+                logger.info(f"{inspect.currentframe().f_code.co_name} process node {node_index + 1} of {len(nodes)}")
+
+            node_parent = node.parent
+
+            if node_parent is None:
+                raise Exception(f"node_parent is None")
+
+            index_value = node[index_key]
+
+            for child_index, child in enumerate(node_parent):
                 if (
-                        child.__class__.__name__ == 'desc_content'
+                        child.__class__.__name__ in class_names
                         and child[index_key] == index_value
                 ):
-                    old_node = desc_content_node_parent[child_index]
-                    new_node = docxbuilder_fix_desc_content(old_node)
-                    desc_content_node_parent[child_index] = new_node
+                    old_node = node_parent[child_index]
+                    new_node = docxbuilder_fix_node(old_node)
+                    node_parent[child_index] = new_node
 
         if docxbuilder_new_assemble_doctree_log and docxbuilder_new_assemble_doctree_log_node_after:
             logger.info(f"{inspect.currentframe().f_code.co_name} log node after")
