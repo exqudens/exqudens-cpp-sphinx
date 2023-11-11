@@ -2,15 +2,34 @@
 #
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
-
-import sphinx.util
+import os
 import json
 import inspect
+from pathlib import Path
+from datetime import datetime
+
+import sphinx.util
 import mlx.traceability
 import docutils.nodes
 import docxbuilder
-from pathlib import Path
-from datetime import datetime
+
+
+# -- Project util functions -----------------------------------------------------
+
+def generate_include(
+    output_file=None
+):
+    if output_file is None:
+        logger.info(f"-- {inspect.currentframe().f_code.co_name}: skip")
+        return
+
+    rst_lines = ['####', 'Test', '####', '', 'Abc.', '']
+
+    logger.info(f"-- {inspect.currentframe().f_code.co_name}: '{output_file}'")
+
+    Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+    Path(output_file).write_text('\n'.join(rst_lines))
+
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -18,15 +37,16 @@ from datetime import datetime
 logger = sphinx.util.logging.getLogger(__name__)
 confJson = json.loads(Path(__file__).parent.joinpath('conf.json').read_text())
 projectDir = confJson['PROJECT_DIR']
-logger.info(f"projectDir: '{projectDir}'")
+logger.info(f"-- projectDir: '{projectDir}'")
 project = Path(projectDir).joinpath('name-version.txt').read_text().split(':')[0].strip()
-logger.info(f"project: '{project}'")
+logger.info(f"-- project: '{project}'")
 copyright = '2023, exqudens'
 author = 'exqudens'
 release = Path(projectDir).joinpath('name-version.txt').read_text().split(':')[1].strip()
-logger.info(f"release: '{release}'")
+logger.info(f"-- release: '{release}'")
 rst_prolog = '.. |project| replace:: ' + project + '\n\n'
 rst_prolog += '.. |release| replace:: ' + release + '\n\n'
+generate_include(str(Path(__file__).parent.joinpath('generated', 'designs-1-include.rst')))
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -118,7 +138,7 @@ def setup(app):
     docxbuilder_old_assemble_doctree = getattr(docxbuilder.DocxBuilder, 'assemble_doctree')
 
     def log_node(node):
-        logger.info(f"{inspect.currentframe().f_code.co_name} start")
+        logger.info(f"-- {inspect.currentframe().f_code.co_name} start")
         nodes = node.traverse()
         entries = []
         for node in nodes:
@@ -132,8 +152,8 @@ def setup(app):
                 strings = [i.astext() if isinstance(i, docutils.nodes.Text) else i.__class__.__name__ for i in entry]
                 entries.append(strings)
         for entry in entries:
-            logger.info(f"{entry}")
-        logger.info(f"{inspect.currentframe().f_code.co_name} end")
+            logger.info(f"-- {entry}")
+        logger.info(f"-- {inspect.currentframe().f_code.co_name} end")
 
     def find_nodes(node, class_names=None, index_key=None, include_self=False):
         if class_names is None:
@@ -259,19 +279,19 @@ def setup(app):
 
     def docxbuilder_new_assemble_doctree(self, master, toctree_only):
         if docxbuilder_new_assemble_doctree_log:
-            logger.info(f"{inspect.currentframe().f_code.co_name}")
+            logger.info(f"-- {inspect.currentframe().f_code.co_name}")
 
         tree = docxbuilder_old_assemble_doctree(self, master, toctree_only)
 
         if docxbuilder_new_assemble_doctree_log and docxbuilder_new_assemble_doctree_log_node_before:
-            logger.info(f"{inspect.currentframe().f_code.co_name} log node before")
+            logger.info(f"-- {inspect.currentframe().f_code.co_name} log node before")
             log_node(tree)
 
         if not docxbuilder_new_assemble_doctree_apply:
             return tree
 
         if docxbuilder_new_assemble_doctree_log:
-            logger.info(f"{inspect.currentframe().f_code.co_name} find 'desc_content' nodes")
+            logger.info(f"-- {inspect.currentframe().f_code.co_name} find 'desc_content' nodes")
 
         class_names = ['section', 'desc_content', 'table']
         index_key = 'docxbuilder_new_assemble_doctree_index'
@@ -279,14 +299,14 @@ def setup(app):
         nodes.reverse()
 
         if docxbuilder_new_assemble_doctree_log:
-            logger.info(f"{inspect.currentframe().f_code.co_name} found nodes len: '{len(nodes)}'")
+            logger.info(f"-- {inspect.currentframe().f_code.co_name} found nodes len: '{len(nodes)}'")
 
         if docxbuilder_new_assemble_doctree_log:
-            logger.info(f"{inspect.currentframe().f_code.co_name} process")
+            logger.info(f"-- {inspect.currentframe().f_code.co_name} process")
 
         for node_index, node in enumerate(nodes):
             if docxbuilder_new_assemble_doctree_log:
-                logger.info(f"{inspect.currentframe().f_code.co_name} process node {node_index + 1} of {len(nodes)}")
+                logger.info(f"-- {inspect.currentframe().f_code.co_name} process node {node_index + 1} of {len(nodes)}")
 
             node_parent = node.parent
 
@@ -305,7 +325,7 @@ def setup(app):
                     node_parent[child_index] = new_node
 
         if docxbuilder_new_assemble_doctree_log and docxbuilder_new_assemble_doctree_log_node_after:
-            logger.info(f"{inspect.currentframe().f_code.co_name} log node after")
+            logger.info(f"-- {inspect.currentframe().f_code.co_name} log node after")
             log_node(tree)
 
         return tree

@@ -7,7 +7,7 @@ block()
         file(DOWNLOAD
             "https://raw.githubusercontent.com/exqudens/exqudens-cmake/master/src/main/cmake/${fileName}"
             "${CMAKE_CURRENT_BINARY_DIR}/tmp/${fileName}"
-            EXPECTED_MD5 "2c0cf2e77d3be99e5ec8d2e2c0b4bd46"
+            EXPECTED_MD5 "88ad42c01d3cf562fc31138a58889b9f"
             STATUS downloadStatus
         )
         if("${downloadStatus}" STREQUAL "0;\"No error\"")
@@ -87,6 +87,8 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS FALSE)
 set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
 set(CMAKE_CXX_VISIBILITY_PRESET "hidden")
 set(CMAKE_VISIBILITY_INLINES_HIDDEN TRUE)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
@@ -495,9 +497,12 @@ add_custom_target("sphinx-doc-designs-1"
             OUTPUT_DIR "build/doc/designs-1"
             TYPE "designs-1"
             FILES "designs/designs-1.rst"
+                  #"generated/designs-1-include.rst>TOCTREE_ONLY"
             EXTRA_FILES "designs/png/structure.png"
                         #"docutils.conf"
             BUILDERS "html" "docx"
+            WARNINGS_TO_ERRORS "false"
+            SPHINX_WARNINGS_ERRORS_FILE "${PROJECT_BINARY_DIR}/sphinx-warnings-errors.txt"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
     USES_TERMINAL
