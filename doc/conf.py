@@ -46,7 +46,7 @@ release = Path(projectDir).joinpath('name-version.txt').read_text().split(':')[1
 logger.info(f"-- release: '{release}'")
 rst_prolog = '.. |project| replace:: ' + project + '\n\n'
 rst_prolog += '.. |release| replace:: ' + release + '\n\n'
-generate_include(str(Path(__file__).parent.joinpath('generated', 'designs-1-include.rst')))
+generate_include(None if confJson.get('PROJECT_GENERATED_INCLUDE_PATH') is None else confJson['PROJECT_GENERATED_INCLUDE_PATH'])
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

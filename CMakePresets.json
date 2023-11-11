@@ -205,6 +205,11 @@
       "configurePreset": "windows.ninja.msvc-16-x64.debug.shared",
       "inherits": [ "default" ]
     },
+    {
+      "name": "windows.ninja.msvc-16-x64.debug.static",
+      "configurePreset": "windows.ninja.msvc-16-x64.debug.static",
+      "inherits": [ "default" ]
+    },
 
     {
       "name": "linux.ninja.gcc.debug.shared",
@@ -234,6 +239,11 @@
     {
       "name": "windows.ninja.msvc-16-x64.debug.shared",
       "configurePreset": "windows.ninja.msvc-16-x64.debug.shared",
+      "inherits": [ "default" ]
+    },
+    {
+      "name": "windows.ninja.msvc-16-x64.debug.static",
+      "configurePreset": "windows.ninja.msvc-16-x64.debug.static",
       "inherits": [ "default" ]
     },
 
