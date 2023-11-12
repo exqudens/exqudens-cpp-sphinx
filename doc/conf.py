@@ -11,7 +11,21 @@ from datetime import datetime
 import sphinx.util
 import mlx.traceability
 import docutils.nodes
-import docxbuilder
+
+# breathe
+from breathe.renderer.filter import FilterFactory
+from breathe.renderer.filter import OrFilter
+from breathe.renderer.filter import AndFilter
+from breathe.renderer.filter import OpenFilter
+from breathe.renderer.filter import ClosedFilter
+from breathe.renderer.filter import UnrecognisedKindError
+from breathe.renderer.filter import Node
+from breathe.renderer.filter import Parent
+from breathe.renderer.filter import Ancestor
+from breathe.renderer.filter import HasAncestorFilter
+
+# docxbuilder
+from docxbuilder import DocxBuilder
 
 
 # -- Project util functions -----------------------------------------------------
@@ -90,6 +104,10 @@ breathe_domain_by_extension = {
     'cpp': 'cpp'
 }
 breathe_default_project = confJson['PROJECT_BREATHE_DEFAULT']
+breathe_new_create_content_filter_apply = True
+breathe_new_create_content_filter_log = False
+breathe_new_create_render_filter_apply = True
+breathe_new_create_render_filter_log = False
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -135,7 +153,138 @@ pdf_use_coverpage = False
 # -- Project setup -----------------------------------------------------
 
 def setup(app):
-    docxbuilder_old_assemble_doctree = getattr(docxbuilder.DocxBuilder, 'assemble_doctree')
+    # -- Project breathe setup -----------------------------------------------------
+
+    breathe_old_create_content_filter = getattr(FilterFactory, 'create_content_filter')
+
+    def breathe_new_create_content_filter(self, kind, options):
+        if not breathe_new_create_content_filter_apply:
+            return breathe_old_create_content_filter(self, kind, options)
+
+        if breathe_new_create_content_filter_log:
+            logger.info(f"-- {inspect.currentframe().f_code.co_name} call")
+
+        if kind not in ["group", "page", "namespace"]:
+            raise UnrecognisedKindError(kind)
+
+        node = Node()
+
+        # Filter for public memberdefs
+        node_is_memberdef = node.node_type == "memberdef"
+        node_is_visible = OrFilter(
+            AndFilter(
+                OpenFilter() if 'members' in options else ClosedFilter(),
+                node.prot == "public"
+            ),
+            AndFilter(
+                OpenFilter() if 'protected-members' in options else ClosedFilter(),
+                node.prot == "protected"
+            ),
+            AndFilter(
+                OpenFilter() if 'private-members' in options else ClosedFilter(),
+                node.prot == "private"
+            )
+        )
+
+        visible_members = node_is_memberdef & node_is_visible
+
+        # Filter for public innerclasses
+        parent = Parent()
+        parent_is_compounddef = parent.node_type == "compounddef"
+        parent_is_class = parent.kind == kind
+
+        node_is_innerclass = (node.node_type == "ref") & (node.node_name == "innerclass")
+        node_is_visible = OrFilter(
+            AndFilter(
+                OpenFilter() if 'members' in options else ClosedFilter(),
+                node.prot == "public"
+            ),
+            AndFilter(
+                OpenFilter() if 'protected-members' in options else ClosedFilter(),
+                node.prot == "protected"
+            ),
+            AndFilter(
+                OpenFilter() if 'private-members' in options else ClosedFilter(),
+                node.prot == "private"
+            )
+        )
+
+        public_innerclass = (
+            parent_is_compounddef & parent_is_class & node_is_innerclass & node_is_visible
+        )
+
+        return visible_members | public_innerclass
+
+    setattr(FilterFactory, 'create_content_filter', breathe_new_create_content_filter)
+
+    breathe_old_create_render_filter = getattr(FilterFactory, 'create_render_filter')
+
+    def breathe_new_create_render_filter(self, kind, options):
+        if not breathe_new_create_render_filter_apply:
+            return breathe_old_create_render_filter(self, kind, options)
+
+        if breathe_new_create_render_filter_log:
+            logger.info(f"-- {inspect.currentframe().f_code.co_name} call")
+
+        if kind not in ["group", "page", "namespace"]:
+            raise UnrecognisedKindError(kind)
+
+        # Generate new dictionary from defaults
+        filter_options = dict((entry, "") for entry in self.app.config.breathe_default_members)
+
+        # Update from the actual options
+        filter_options.update(options)
+
+        # Convert the doxygengroup members flag (which just stores None as the value) to an empty
+        # string to allow the create_class_member_filter to process it properly
+        if "members" in filter_options:
+            filter_options["members"] = ""
+
+        if "desc-only" in filter_options:
+            return self._create_description_filter(True, "compounddef", options)
+
+        node = Node()
+        grandparent = Ancestor(2)
+        has_grandparent = HasAncestorFilter(2)
+
+        non_class_memberdef = (
+            has_grandparent
+            & (grandparent.node_type == "compounddef")
+            & (grandparent.kind != "class")
+            & (grandparent.kind != "struct")
+            & (grandparent.kind != "interface")
+            & (node.node_type == "memberdef")
+        )
+
+        non_class_filter = AndFilter(
+            non_class_memberdef,
+            OrFilter(
+                AndFilter(
+                    OpenFilter() if 'members' in options else ClosedFilter(),
+                    node.prot == "public"
+                ),
+                AndFilter(
+                    OpenFilter() if 'protected-members' in options else ClosedFilter(),
+                    node.prot == "protected"
+                ),
+                AndFilter(
+                    OpenFilter() if 'private-members' in options else ClosedFilter(),
+                    node.prot == "private"
+                )
+            )
+        )
+
+        return (
+            (self.create_class_member_filter(filter_options) | non_class_filter)
+            & self.create_innerclass_filter(filter_options)
+            & self.create_outline_filter(filter_options)
+        )
+
+    setattr(FilterFactory, 'create_render_filter', breathe_new_create_render_filter)
+
+    # -- Project docxbuilder setup -----------------------------------------------------
+
+    docxbuilder_old_assemble_doctree = getattr(DocxBuilder, 'assemble_doctree')
 
     def log_node(node):
         logger.info(f"-- {inspect.currentframe().f_code.co_name} start")
@@ -330,4 +479,4 @@ def setup(app):
 
         return tree
 
-    setattr(docxbuilder.DocxBuilder, 'assemble_doctree', docxbuilder_new_assemble_doctree)
+    setattr(DocxBuilder, 'assemble_doctree', docxbuilder_new_assemble_doctree)

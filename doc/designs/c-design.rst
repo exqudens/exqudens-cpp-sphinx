@@ -2,23 +2,48 @@
 |project| |release| c-design
 ############################
 
-************
-Architecture
-************
+*******************************
+Architecture Group Content Only
+*******************************
+
+Should show public and protected only.
 
 .. doxygengroup:: EXQUDENS_MATH
    :content-only:
    :outline:
    :members:
-   :undoc-members:
+   :protected-members:
 
-*******
-Details
-*******
+**************************
+Details Group Content Only
+**************************
+
+Should show public and protected and private only.
 
 .. doxygengroup:: EXQUDENS_MATH
    :content-only:
    :members:
    :protected-members:
    :private-members:
-   :undoc-members:
+
+******************
+Architecture Group
+******************
+
+Should show public and protected only.
+
+.. doxygengroup:: EXQUDENS_MATH
+   :outline:
+   :members:
+   :protected-members:
+
+*************
+Details Group
+*************
+
+Should show public and protected and private only.
+
+.. doxygengroup:: EXQUDENS_MATH
+   :members:
+   :protected-members:
+   :private-members:

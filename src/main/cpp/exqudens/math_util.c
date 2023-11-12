@@ -19,9 +19,17 @@ static int exqudens_math_util_internal_add(int a, int b) {
 
 /*!
 * @details Protected sum of two integer values.
+* @protected
 */
 int exqudens_math_util_add(int a, int b) {
   return exqudens_math_util_internal_add(a, b);
+}
+
+/*!
+* @protected
+*/
+int exqudens_math_util_subtract(int a, int b) {
+  return a - b;
 }
 
 //! @}

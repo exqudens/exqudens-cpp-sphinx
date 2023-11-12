@@ -12,6 +12,11 @@
 */
 int exqudens_math_util_add(int a, int b);
 
+/*!
+* @protected
+*/
+int exqudens_math_util_subtract(int a, int b);
+
 //! @}
 
 #endif
