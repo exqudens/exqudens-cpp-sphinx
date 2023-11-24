@@ -2,15 +2,19 @@
 #
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
-import os
 import json
 import inspect
 from pathlib import Path
 from datetime import datetime
+from collections import deque
 
 import sphinx.util
 import mlx.traceability
 import docutils.nodes
+
+# docutils
+from docutils.nodes import NodeVisitor
+from docutils.nodes import TreePruningException
 
 # breathe
 from breathe.renderer.filter import FilterFactory
@@ -82,6 +86,9 @@ exclude_patterns = []
 
 autosectionlabel_prefix_document = True
 
+# -- Options for docutils -------------------------------------------------
+docutils_text_visited_nodes_size = 10
+
 # -- Options for TRACEABILITY output -------------------------------------------------
 # https://melexis.github.io/sphinx-traceability-extension/configuration.html#configuration
 
@@ -150,11 +157,99 @@ pdf_use_coverpage = False
 #pdf_break_level = 2
 #pdf_breakside = 'any'
 
+
 # -- Project setup -----------------------------------------------------
-
 def setup(app):
-    # -- Project breathe setup -----------------------------------------------------
 
+    # -- Project setup util functions -----------------------------------------------------
+    def to_node_string(node, include_path=True):
+        if node is None:
+            raise Exception("'node' is None")
+        if include_path:
+            path = []
+            n = node
+            while n is not None:
+                path.append(n)
+                n = n.parent
+            path.reverse()
+            path.pop(len(path) - 1)
+            strings = [i.astext() if isinstance(i, docutils.nodes.Text) else i.__class__.__name__ for i in path]
+            node_string = "['" + "', '".join(strings) + "']: '" + (node.astext() if isinstance(node, docutils.nodes.Text) else node.__class__.__name__)
+        else:
+            node_string = node.astext() if isinstance(node, docutils.nodes.Text) else node.__class__.__name__
+        return node_string
+
+    def log_node(node):
+        logger.info(f"-- {inspect.currentframe().f_code.co_name} start")
+        nodes = node.traverse()
+        entries = []
+        for node in nodes:
+            if isinstance(node, docutils.nodes.Text) or len(node) == 0:
+                entry = []
+                n = node
+                while n is not None:
+                    entry.append(n)
+                    n = n.parent
+                entry.reverse()
+                strings = [i.astext() if isinstance(i, docutils.nodes.Text) else i.__class__.__name__ for i in entry]
+                entries.append(strings)
+        for entry in entries:
+            logger.info(f"-- {entry}")
+        logger.info(f"-- {inspect.currentframe().f_code.co_name} end")
+
+    def find_nodes(node, class_names=None, index_key=None, include_self=False):
+        if class_names is None:
+            raise Exception("Unspecified 'class_names'")
+
+        if index_key is None:
+            raise Exception("Unspecified 'index_key'")
+
+        result = []
+
+        for n in node.traverse(include_self=include_self):
+            if n.__class__.__name__ in class_names:
+                n[index_key] = len(result)
+                result.append(n)
+
+        return result
+
+    # -- Project docutils setup -----------------------------------------------------
+    docutils_text_visited_nodes = deque([], docutils_text_visited_nodes_size)
+    docutils_old_dispatch_visit = getattr(NodeVisitor, 'dispatch_visit')
+
+    def docutils_new_dispatch_visit(self, node):
+        try:
+            if node is not None and node.__class__.__name__ == 'Text':
+                docutils_text_visited_nodes.append(node)
+            return docutils_old_dispatch_visit(self, node)
+        except TreePruningException as e:
+            raise e
+        except Exception as e:
+            for n in docutils_text_visited_nodes:
+                logger.error(f"-- {inspect.currentframe().f_code.co_name} (previous): {to_node_string(n)}")
+            logger.error(f"-- {inspect.currentframe().f_code.co_name} (current): {to_node_string(node)}")
+            logger.error(e, exc_info = True)
+            raise e
+
+    setattr(NodeVisitor, 'dispatch_visit', docutils_new_dispatch_visit)
+
+    docutils_old_dispatch_departure = getattr(NodeVisitor, 'dispatch_departure')
+
+    def docutils_new_dispatch_departure(self, node):
+        try:
+            return docutils_old_dispatch_departure(self, node)
+        except TreePruningException as e:
+            raise e
+        except Exception as e:
+            for n in docutils_text_visited_nodes:
+                logger.error(f"-- {inspect.currentframe().f_code.co_name} (previous): '{to_node_string(n)}'")
+            logger.error(f"-- {inspect.currentframe().f_code.co_name} (current): {to_node_string(node)}")
+            logger.error(e, exc_info = True)
+            raise e
+
+    setattr(NodeVisitor, 'dispatch_departure', docutils_new_dispatch_departure)
+
+    # -- Project breathe setup -----------------------------------------------------
     breathe_old_create_content_filter = getattr(FilterFactory, 'create_content_filter')
 
     def breathe_new_create_content_filter(self, kind, options):
@@ -283,42 +378,7 @@ def setup(app):
     setattr(FilterFactory, 'create_render_filter', breathe_new_create_render_filter)
 
     # -- Project docxbuilder setup -----------------------------------------------------
-
     docxbuilder_old_assemble_doctree = getattr(DocxBuilder, 'assemble_doctree')
-
-    def log_node(node):
-        logger.info(f"-- {inspect.currentframe().f_code.co_name} start")
-        nodes = node.traverse()
-        entries = []
-        for node in nodes:
-            if isinstance(node, docutils.nodes.Text) or len(node) == 0:
-                entry = []
-                n = node
-                while n is not None:
-                    entry.append(n)
-                    n = n.parent
-                entry.reverse()
-                strings = [i.astext() if isinstance(i, docutils.nodes.Text) else i.__class__.__name__ for i in entry]
-                entries.append(strings)
-        for entry in entries:
-            logger.info(f"-- {entry}")
-        logger.info(f"-- {inspect.currentframe().f_code.co_name} end")
-
-    def find_nodes(node, class_names=None, index_key=None, include_self=False):
-        if class_names is None:
-            raise Exception("Unspecified 'class_names'")
-
-        if index_key is None:
-            raise Exception("Unspecified 'index_key'")
-
-        result = []
-
-        for n in node.traverse(include_self=include_self):
-            if n.__class__.__name__ in class_names:
-                n[index_key] = len(result)
-                result.append(n)
-
-        return result
 
     def docxbuilder_unwrap(value, class_names=None):
         if class_names is None:
@@ -365,7 +425,10 @@ def setup(app):
                 'enumerated_list',
                 'definition_list',
                 'table',
+                'seealso',
+                'desc',
                 'math_block',
+                'literal_block',
                 'image'
             ]
             wrap_with_paragraph = [
@@ -373,35 +436,21 @@ def setup(app):
             ]
             result = docxbuilder_unwrap(value, class_names=extract_from_paragraph)
 
-            target_class_name = 'list_item'
-            target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
-            target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
-            target_nodes.reverse()
-            for node in target_nodes:
-                node_parent = node.parent
-                if node_parent is None:
-                    raise Exception("'node_parent' is 'None'")
-                target_index = node[target_index_key]
-                for child_index, child in enumerate(node_parent):
-                    if child.__class__.__name__ == target_class_name and child[target_index_key] == target_index:
-                        old_node = node_parent[child_index]
-                        new_node = docxbuilder_unwrap(old_node, class_names=extract_from_paragraph)
-                        node_parent[child_index] = new_node
-
-            target_class_name = 'definition'
-            target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
-            target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
-            target_nodes.reverse()
-            for node in target_nodes:
-                node_parent = node.parent
-                if node_parent is None:
-                    raise Exception("'node_parent' is 'None'")
-                target_index = node[target_index_key]
-                for child_index, child in enumerate(node_parent):
-                    if child.__class__.__name__ == target_class_name and child[target_index_key] == target_index:
-                        old_node = node_parent[child_index]
-                        new_node = docxbuilder_unwrap(old_node, class_names=extract_from_paragraph)
-                        node_parent[child_index] = new_node
+            target_class_names = ['list_item', 'definition', 'note']
+            for target_class_name in target_class_names:
+                target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
+                target_nodes = find_nodes(result, class_names=[target_class_name], index_key=target_index_key)
+                target_nodes.reverse()
+                for node in target_nodes:
+                    node_parent = node.parent
+                    if node_parent is None:
+                        raise Exception("'node_parent' is 'None'")
+                    target_index = node[target_index_key]
+                    for child_index, child in enumerate(node_parent):
+                        if child.__class__.__name__ == target_class_name and child[target_index_key] == target_index:
+                            old_node = node_parent[child_index]
+                            new_node = docxbuilder_unwrap(old_node, class_names=extract_from_paragraph)
+                            node_parent[child_index] = new_node
 
             target_class_name = 'enumerated_list'
             target_index_key = 'docxbuilder_fix_desc_content_' + target_class_name + '_index'
