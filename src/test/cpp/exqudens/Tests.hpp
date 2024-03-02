@@ -6,10 +6,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-extern "C" {
-  #include "exqudens/math.h"
-}
-
+#include "exqudens/math.h"
 #include "TestUtils.hpp"
 #include "exqudens/Strings.hpp"
 

@@ -7,7 +7,7 @@ block()
         file(DOWNLOAD
             "https://raw.githubusercontent.com/exqudens/exqudens-cmake/master/src/main/cmake/${fileName}"
             "${CMAKE_CURRENT_BINARY_DIR}/tmp/${fileName}"
-            EXPECTED_MD5 "88ad42c01d3cf562fc31138a58889b9f"
+            EXPECTED_MD5 "329d8afd7861903d8892854683082725"
             STATUS downloadStatus
         )
         if("${downloadStatus}" STREQUAL "0;\"No error\"")
@@ -106,10 +106,23 @@ string(JOIN " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 set(CMAKE_VERBOSE_MAKEFILE TRUE CACHE BOOL "" FORCE)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE CACHE BOOL "" FORCE)
 
+set(TEST_GROUP "all" CACHE STRING "...")
+set(TEST_CASE "all" CACHE STRING "...")
+
 set(TARGET_CMAKE_INSTALL_DEPENDS_ON "cmake-test")
 option(SKIP_CMAKE_TEST "..." FALSE)
 if(${SKIP_CMAKE_TEST})
     set(TARGET_CMAKE_INSTALL_DEPENDS_ON "${PROJECT_NAME}")
+    set(TARGET_CMAKE_INSTALL_DEPENDS_ON "cmake-test")
+    if("${TEST_GROUP}" STREQUAL "all" AND "${TEST_CASE}" STREQUAL "all")
+        set(TEST_REGEXP "^.+\\..+$")
+    elseif(NOT "${TEST_GROUP}" STREQUAL "all" AND "${TEST_CASE}" STREQUAL "all")
+        set(TEST_REGEXP "^${TEST_GROUP}\\..+$")
+    elseif("${TEST_GROUP}" STREQUAL "all" AND NOT "${TEST_CASE}" STREQUAL "all")
+        set(TEST_REGEXP "^.+\\.${TEST_CASE}$")
+    elseif(NOT "${TEST_GROUP}" STREQUAL "all" AND NOT "${TEST_CASE}" STREQUAL "all")
+        set(TEST_REGEXP "^${TEST_GROUP}\\.${TEST_CASE}$")
+    endif()
 endif()
 
 if(NOT "${BUILD_SHARED_LIBS}" AND "${MINGW}")
@@ -453,6 +466,7 @@ add_custom_target("sphinx-doc-requirements"
             REQUIREMENTS_FILE "sphinx-requirements.txt"
             CONF_JSON_VARS "PROJECT_DIR=${PROJECT_SOURCE_DIR}"
                            "PROJECT_TITLE=${PROJECT_NAME} designs"
+                           "PROJECT_BREATHE_DEFAULT=main"
             OUTPUT_DIR "build/doc/requirements"
             TYPE "requirements"
             FILES "requirements/requirements.rst"
@@ -461,7 +475,7 @@ add_custom_target("sphinx-doc-requirements"
     VERBATIM
     USES_TERMINAL
 )
-add_custom_target("sphinx-doc-c-design"
+add_custom_target("sphinx-doc-c-designs"
     COMMAND "${CMAKE_COMMAND}" "-P" "${PROJECT_BINARY_DIR}/../common/util.cmake" "--" "doxygen"
             SOURCE_BASE_DIR "${PROJECT_SOURCE_DIR}"
             #SOURCE_DIR "src/main/c"
