@@ -5,9 +5,9 @@ block()
     if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/../common/${fileName}")
         file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/tmp/${fileName}")
         file(DOWNLOAD
-            "https://raw.githubusercontent.com/exqudens/exqudens-cmake/master/src/main/cmake/${fileName}"
+            "https://raw.githubusercontent.com/exqudens/exqudens-cmake/1.0.1/src/main/cmake/${fileName}"
             "${CMAKE_CURRENT_BINARY_DIR}/tmp/${fileName}"
-            EXPECTED_MD5 "329d8afd7861903d8892854683082725"
+            EXPECTED_MD5 "d7dd546adf3830d9eb6cca7b0dda7d4e"
             STATUS downloadStatus
         )
         if("${downloadStatus}" STREQUAL "0;\"No error\"")
@@ -30,19 +30,17 @@ if("msvc-16-x64" IN_LIST "PRESET_NAME_ELEMENTS")
             HOST "x64"
             TARGET "x64"
             OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/../common/msvc-16-x64-toolchain.cmake"
-            NO_CACHE "FALSE"
         )
     endif()
     find_program(CONAN_COMMAND NAMES "conan.exe" PATHS ENV CONAN_PATH ENV PATH REQUIRED NO_CACHE NO_DEFAULT_PATH)
 elseif("gcc" IN_LIST PRESET_NAME_ELEMENTS)
     if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/../common/gcc-toolchain.cmake")
-        find_file(COMPILER_PATH NAMES "gcc" PATHS ENV GCC_PATH ENV PATH REQUIRED NO_CACHE NO_DEFAULT_PATH)
+        find_file(compilerPath NAMES "gcc" PATHS ENV GCC_PATH ENV PATH REQUIRED NO_CACHE NO_DEFAULT_PATH)
         set_gnu_toolchain(TOOLCHAIN_CONTENT
             PROCESSOR "x86_64"
             OS "${CMAKE_HOST_SYSTEM_NAME}"
-            PATH "${COMPILER_PATH}"
+            PATH "${compilerPath}"
             OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/../common/gcc-toolchain.cmake"
-            NO_CACHE "FALSE"
         )
     endif()
     find_program(CONAN_COMMAND NAMES "conan" PATHS ENV CONAN_PATH ENV PATH REQUIRED NO_CACHE NO_DEFAULT_PATH)

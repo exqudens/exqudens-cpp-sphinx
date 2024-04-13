@@ -67,29 +67,33 @@ namespace exqudens {
       * Formula :math:`a^3 + b^3 = c^3`
       * @endverbatim
       *
-      * @param value Input string.
-      *
       * @return Result string.
       */
-      static std::string ltrim(const std::string& value);
+      static std::string ltrim(
+          const std::string& value //!< Input string.
+      );
 
       /*!
       * @brief Remove all spaces from end of the string.
       *
       * - Bullet-Item-7
       *
-      * @param value Input string.
-      *
       * @return Result string.
       */
-      static std::string rtrim(const std::string& value);
+      static std::string rtrim(
+          const std::string& value //!< Input string.
+      );
 
       /*!
       * @verbatim embed:rst:leading-asterisk
       * Remove all spaces from begin and end of the string.
       * @endverbatim
+      *
+      * @return Result string.
       */
-      static std::string trim(const std::string& value);
+      static std::string trim(
+          const std::string& value //!< Input string.
+      );
 
   };
 
