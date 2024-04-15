@@ -67,10 +67,12 @@ namespace exqudens {
       * Formula :math:`a^3 + b^3 = c^3`
       * @endverbatim
       *
+      * @param value Input string.
+      *
       * @return Result string.
       */
       static std::string ltrim(
-          const std::string& value //!< Input string.
+          const std::string& value
       );
 
       /*!
